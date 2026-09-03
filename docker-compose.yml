@@ -1,0 +1,80 @@
+name: glorific
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: glorific_db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-glorific}
+      POSTGRES_USER: ${DB_USER:-glorific}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-glorific}
+    ports:
+      # loopback do host apenas — entre containers use o nome "db"
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-glorific} -d ${DB_NAME:-glorific}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: glorific_api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=${DB_NAME:-glorific};Username=${DB_USER:-glorific};Password=${DB_PASSWORD:-glorific}"
+      Jwt__Key: ${JWT_KEY}
+      Jwt__Issuer: ${JWT_ISSUER:-glorific.art}
+      Jwt__Audience: ${JWT_AUDIENCE:-glorific.art}
+      Google__ClientId: ${GOOGLE_CLIENT_ID}
+      InfinitePay__Handle: ${INFINITEPAY_HANDLE}
+      InfinitePay__BaseUrl: ${INFINITEPAY_BASE_URL:-https://api.infinitepay.io}
+      App__PublicBaseUrl: ${APP_PUBLIC_BASE_URL:-http://localhost:5080}
+      App__LojaBaseUrl: ${APP_LOJA_BASE_URL:-http://localhost:5174}
+      # DNS interno da rede externa — NUNCA 127.0.0.1:5006 entre containers
+      MelhorEnvio__BaseUrl: ${ME_SERVICE_URL:-http://melhorenvio_api:8080}
+      MelhorEnvio__ApiKey: ${ME_API_KEY}
+      Frete__CepOrigem: ${FRETE_CEP_ORIGEM}
+      Frete__Remetente__Nome: ${FRETE_REMETENTE_NOME}
+      Frete__Remetente__Documento: ${FRETE_REMETENTE_DOCUMENTO}
+      Secrets__MasterKey: ${SECRETS_MASTER_KEY}
+    ports:
+      - "127.0.0.1:5080:8080"
+    networks:
+      - default
+      - glorific_me
+    restart: unless-stopped
+
+  front:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-/api}
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+    container_name: glorific_front
+    depends_on:
+      - api
+    ports:
+      - "127.0.0.1:5174:80"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+
+networks:
+  # Rede dedicada e EXTERNA para falar com o microservico do Melhor Envio.
+  # Criar uma vez por host, senao o "up" falha:
+  #   docker network create --driver bridge --subnet 172.27.0.0/16 --gateway 172.27.0.1 GLORIFIC_ME
+  glorific_me:
+    external: true
+    name: GLORIFIC_ME

@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Variaveis de tema — espelham a paleta do design-system para uso fora do
+ * Tailwind (SVG inline, canvas, style inline pontual).
+ * Fonte da verdade continua sendo o `tailwind.config.js`.
+ */
+:root {
+    --bone: #f8f5f0;
+    --linen: #f1ece3;
+    --sand: #e3dbce;
+    --taupe: #b9ae9c;
+    --ink: #1c1a17;
+    --ink-soft: #57514a;
+    --olive: #6b7256;
+    --olive-dp: #515943;
+    --brass: #b08d57;
+    --clay: #a9603f;
+    --success: #5b7551;
+    --warning: #c08a2e;
+    --danger: #9b4a3c;
+
+    --shell: 1440px;
+}
+
+@layer base {
+    html {
+        -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+        @apply bg-base-100 font-sans text-base-content antialiased;
+    }
+
+    /* Titulos sao sempre serifados e com tracking fechado. */
+    h1,
+    h2,
+    h3 {
+        @apply font-display tracking-tight;
+    }
+
+    /* Foco visivel consistente em toda a interface. */
+    :focus-visible {
+        @apply outline-none ring-2 ring-olive ring-offset-2 ring-offset-base-100;
+    }
+
+    ::selection {
+        @apply bg-brass/30;
+    }
+}
+
+@layer components {
+    /* Rotulo editorial: caixa alta, minusculo, muito espacado. */
+    .eyebrow {
+        @apply font-sans text-xs uppercase tracking-widest text-ink-soft;
+    }
+
+    /* Preco sempre em numeros tabulares — nao "dança" em lista. */
+    .preco {
+        @apply font-sans tabular-nums;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Container padrao do shell (header/main/footer). */
+    .shell {
+        @apply mx-auto w-full max-w-shell px-4 sm:px-6 lg:px-10;
+    }
+
+    /* Filete fino da paleta, usado como divisor editorial. */
+    .filete {
+        @apply h-px w-full bg-sand;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

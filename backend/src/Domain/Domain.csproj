@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Glorific.Domain</RootNamespace>
+    <AssemblyName>Glorific.Domain</AssemblyName>
+  </PropertyGroup>
+  <!-- Regra dura: Domain nao tem PackageReference nem ProjectReference. -->
+</Project>

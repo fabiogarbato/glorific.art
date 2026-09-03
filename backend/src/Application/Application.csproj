@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Glorific.Application</RootNamespace>
+    <AssemblyName>Glorific.Application</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Domain\Domain.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
+    <PackageReference Include="Mapster" Version="10.0.0-pre02" />
+    <PackageReference Include="Mapster.DependencyInjection" Version="1.0.1" />
+    <!-- IMemoryCache. A cotacao de frete leva de 2 a 5 s no parceiro e e disparada tres vezes
+         pelo mesmo cliente (produto, carrinho, checkout); o cache de 2 min mora no FreteService,
+         que e Application. Traz Caching.Abstractions junto, que e onde IMemoryCache vive. -->
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.6" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.6" />
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+  </ItemGroup>
+</Project>

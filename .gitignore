@@ -1,0 +1,38 @@
+# ---------- Segredos ----------
+.env
+.env.local
+*.pfx
+appsettings.Local.json
+appsettings.*.Local.json
+
+# ---------- .NET ----------
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+.vs/
+TestResults/
+*.trx
+*.coverage
+
+# ---------- Node ----------
+node_modules/
+dist/
+dist-ssr/
+.vite/
+coverage/
+*.local
+npm-debug.log*
+yarn-error.log*
+
+# ---------- Editor ----------
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+.DS_Store
+Thumbs.db
+
+# ---------- Uploads locais ----------
+uploads/
+wwwroot/media/
