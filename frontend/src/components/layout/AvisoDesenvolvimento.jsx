@@ -85,11 +85,11 @@ export default function AvisoDesenvolvimento() {
                 </div>
 
                 <p className="mt-6 font-display text-xl tracking-tight text-ink">
-                    Ainda estamos construindo.
+                    Em construção.
                 </p>
                 <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-                    A Glorific está no ar, mas em desenvolvimento — algumas coisas ainda vão
-                    mudar por aqui. Fique à vontade pra olhar a coleção.
+                    A Glorific está no ar, mas ainda em desenvolvimento. Algumas coisas por
+                    aqui vão mudar. Fique à vontade pra olhar a coleção.
                 </p>
 
                 <button
