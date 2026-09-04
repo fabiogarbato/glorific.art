@@ -23,16 +23,16 @@ const GARANTIAS_HERO = [
 
 const PILARES = [
     {
-        titulo: "Tecido natural",
-        texto: "Linho, algodão egípcio e viscose de origem responsável. Nada de brilho sintético.",
+        titulo: "Oversized de verdade",
+        texto: "Algodão penteado 220g, corte largo, ombro caído. Pesa na mão e cai no corpo do jeito que camiseta de rua tem que cair.",
     },
     {
-        titulo: "Modelagem serena",
-        texto: "Caimento que cobre sem esconder. Comprimento pensado para o corpo em movimento.",
+        titulo: "A mensagem vai no peito",
+        texto: "Cada estampa carrega um versículo ou uma imagem que diz alguma coisa. Nada de logo gigante, nada de frase de para-choque.",
     },
     {
-        titulo: "Produção curta",
-        texto: "Lotes pequenos, costura nacional e reposição só quando a peça merece voltar.",
+        titulo: "Lote pequeno",
+        texto: "A gente produz pouco de cada vez. Quando acaba, acaba. Só volta o que ainda vale a pena repetir.",
     },
 ];
 
@@ -133,9 +133,9 @@ export default function Home() {
             <section className="shell pb-20">
                 <div className="mb-10 flex items-end justify-between gap-6">
                     <div>
-                        <p className="eyebrow">Seleção da casa</p>
+                        <p className="eyebrow">Drop atual</p>
                         <h2 className="mt-3 font-display text-2xl tracking-tight text-ink">
-                            Peças que voltam sempre
+                            O que está na rua agora
                         </h2>
                     </div>
                     <Botao to="/catalogo" variante="texto" tamanho="sm" className="shrink-0">
@@ -233,10 +233,10 @@ export default function Home() {
             {/* --------------------------------------------------------- MANIFESTO */}
             <section className="border-b border-sand">
                 <div className="shell py-20 text-center">
-                    <p className="eyebrow">O propósito</p>
+                    <p className="eyebrow">Por que a gente faz isso</p>
                     <p className="mx-auto mt-6 max-w-2xl font-display text-2xl italic leading-snug text-ink">
-                        Vestir com dignidade é um gesto de fé, e não precisa de estampa
-                        para ser dito.
+                        Uma camiseta não converte ninguém. Ela só lembra, todo dia, de
+                        quem você já é.
                     </p>
                     <div className="mt-10 flex justify-center">
                         <Botao to="/colecoes" variante="contorno">
