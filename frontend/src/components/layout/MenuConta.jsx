@@ -49,7 +49,7 @@ function primeiroNome(usuario) {
     return (usuario?.email ?? "").split("@")[0] || "sua conta";
 }
 
-export default function MenuConta() {
+export default function MenuConta({ transparente = false } = {}) {
     const [aberto, setAberto] = useState(false);
     const { usuario, isAdmin, logout } = useAuth();
 
@@ -151,7 +151,11 @@ export default function MenuConta() {
                 aria-expanded={aberto}
                 aria-controls={aberto ? idMenu : undefined}
                 aria-label={usuario ? "Minha conta" : "Entrar ou criar cadastro"}
-                className="flex h-11 w-11 items-center justify-center text-ink-soft transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-olive focus-visible:ring-offset-2 focus-visible:ring-offset-base-100"
+                className={`flex h-11 w-11 items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-olive focus-visible:ring-offset-2 ${
+                    transparente
+                        ? "text-bone/80 hover:text-bone focus-visible:ring-offset-ink"
+                        : "text-ink-soft hover:text-ink focus-visible:ring-offset-base-100"
+                }`}
             >
                 <FiUser size={18} />
             </button>

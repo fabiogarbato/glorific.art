@@ -55,26 +55,22 @@ export default function Home() {
                     src="/hero-wall-bg.jpg"
                     alt="Modelo vestindo camiseta oversized Glorific, parede com silhueta de igreja e skyline ao fundo"
                     loading="eager"
-                    className="absolute inset-0 h-full w-full object-cover object-[50%_20%]"
+                    className="absolute inset-0 h-full w-full object-cover object-[50%_38%] lg:object-[50%_20%]"
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/80 to-ink/30 lg:via-ink/55 lg:to-transparent" />
+                {/* Fade no topo — cobre o resquico do texto "glorificar" gravado
+                    na propria foto, que sem isso brigava com o logo real. */}
+                <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-ink to-transparent" />
 
-                <div className="shell relative py-14 lg:py-28">
+                <div className="shell relative py-10 lg:py-28">
                     <div className="max-w-lg">
-                        <img
-                            src="/hero-logo-mark.png"
-                            alt=""
-                            aria-hidden="true"
-                            className="h-10 w-auto animate-pulse-suave opacity-90"
-                        />
-
                         {!carregandoColecoes && colecaoDestaque && (
-                            <p className="mt-6 font-sans text-xs uppercase tracking-widest text-brass">
+                            <p className="font-sans text-xs uppercase tracking-widest text-brass">
                                 Em cartaz · {colecaoDestaque.nome}
                             </p>
                         )}
 
-                        <h1 className="mt-4 font-display text-4xl leading-[1.05] tracking-tight text-bone sm:text-5xl lg:mt-6 lg:text-6xl">
+                        <h1 className="font-display text-4xl leading-[1.05] tracking-tight text-bone sm:text-5xl lg:text-6xl">
                             A beleza que
                             <br />
                             <em className="font-normal italic text-olive">não precisa</em>

@@ -1,14 +1,25 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { FiMenu, FiSearch, FiShoppingBag, FiX } from "react-icons/fi";
 import MenuConta from "./MenuConta.jsx";
 import { STORE } from "@/data/store.js";
 import { useCarrinho } from "@/hooks/useCarrinho.js";
 
-const linkClasses = ({ isActive }) =>
-    `font-sans text-xs uppercase tracking-widest transition-colors ${
-        isActive ? "text-ink" : "text-ink-soft hover:text-ink"
-    }`;
+// Limiar de rolagem para o header sair do estado transparente da Home.
+const LIMIAR_ROLAGEM = 48;
+
+function obterLinkClasses(transparente) {
+    return ({ isActive }) =>
+        `font-sans text-xs uppercase tracking-widest transition-colors ${
+            transparente
+                ? isActive
+                    ? "text-bone"
+                    : "text-bone/70 hover:text-bone"
+                : isActive
+                  ? "text-ink"
+                  : "text-ink-soft hover:text-ink"
+        }`;
+}
 
 const MENSAGENS_FAIXA = [
     "Frete cortesia acima de R$ 399 · Parcelamento em até 6x",
@@ -45,9 +56,29 @@ export default function Header() {
     const [menuAberto, setMenuAberto] = useState(false);
     const [buscaAberta, setBuscaAberta] = useState(false);
     const [termo, setTermo] = useState("");
+    const [rolou, setRolou] = useState(false);
     const navigate = useNavigate();
+    const { pathname } = useLocation();
 
     const { totalItens, abrir } = useCarrinho();
+
+    // So a Home tem hero escuro logo abaixo do header — nas outras paginas o
+    // header fica sempre no estado solido, senao o logo branco some contra
+    // um fundo claro.
+    const naHome = pathname === "/";
+
+    useEffect(() => {
+        if (!naHome) return undefined;
+        function aoRolar() {
+            setRolou(window.scrollY > LIMIAR_ROLAGEM);
+        }
+        aoRolar();
+        window.addEventListener("scroll", aoRolar, { passive: true });
+        return () => window.removeEventListener("scroll", aoRolar);
+    }, [naHome]);
+
+    const transparente = naHome && !rolou;
+    const linkClasses = obterLinkClasses(transparente);
 
     function submeterBusca(e) {
         e.preventDefault();
@@ -59,10 +90,17 @@ export default function Header() {
     }
 
     return (
-        <header className="sticky top-0 z-header border-b border-sand bg-base-100/95 backdrop-blur">
+        <header
+            className={`sticky top-0 z-header border-b transition-colors duration-300 ${
+                transparente
+                    ? "border-transparent bg-ink/60 backdrop-blur-md"
+                    : "border-sand bg-base-100/95 backdrop-blur"
+            }`}
+        >
             {/* Faixa de aviso — o unico bloco escuro do topo, alterna entre
-                info pratica e a voz da marca. */}
-            <FaixaTopo />
+                info pratica e a voz da marca. Some no estado transparente:
+                repetiria o mesmo tom escuro do hero por baixo. */}
+            {!transparente && <FaixaTopo />}
 
             <div className="shell flex h-24 items-center justify-between gap-6">
                 <button
@@ -70,16 +108,20 @@ export default function Header() {
                     aria-label={menuAberto ? "Fechar menu" : "Abrir menu"}
                     aria-expanded={menuAberto}
                     onClick={() => setMenuAberto((v) => !v)}
-                    className="flex h-11 w-11 items-center justify-center text-ink lg:hidden"
+                    className={`flex h-11 w-11 items-center justify-center lg:hidden ${
+                        transparente ? "text-bone" : "text-ink"
+                    }`}
                 >
                     {menuAberto ? <FiX size={20} /> : <FiMenu size={20} />}
                 </button>
 
                 <Link to="/" className="shrink-0" aria-label={`${STORE.name}, início`}>
                     <img
-                        src="/logo-glorific.png"
+                        src={transparente ? "/hero-logo-mark.png" : "/logo-glorific.png"}
                         alt={STORE.name}
-                        className="h-16 w-auto sm:h-20"
+                        className={`w-auto transition-all duration-300 ${
+                            transparente ? "h-28 sm:h-36" : "h-16 sm:h-20"
+                        }`}
                     />
                 </Link>
 
@@ -95,9 +137,9 @@ export default function Header() {
                     <form
                         onSubmit={submeterBusca}
                         role="search"
-                        className={`items-center border-b border-sand transition-all ${
-                            buscaAberta ? "flex w-40 sm:w-56" : "hidden xl:flex xl:w-52"
-                        }`}
+                        className={`items-center border-b transition-all ${
+                            transparente ? "border-bone/30" : "border-sand"
+                        } ${buscaAberta ? "flex w-40 sm:w-56" : "hidden xl:flex xl:w-52"}`}
                     >
                         <label htmlFor="busca-topo" className="sr-only">
                             Buscar produtos
@@ -108,12 +150,20 @@ export default function Header() {
                             value={termo}
                             onChange={(e) => setTermo(e.target.value)}
                             placeholder="Buscar"
-                            className="h-9 w-full bg-transparent font-sans text-sm text-ink placeholder:text-taupe focus:outline-none"
+                            className={`h-9 w-full bg-transparent font-sans text-sm focus:outline-none ${
+                                transparente
+                                    ? "text-bone placeholder:text-bone/50"
+                                    : "text-ink placeholder:text-taupe"
+                            }`}
                         />
                         <button
                             type="submit"
                             aria-label="Buscar"
-                            className="flex h-9 w-9 items-center justify-center text-ink-soft hover:text-ink"
+                            className={`flex h-9 w-9 items-center justify-center ${
+                                transparente
+                                    ? "text-bone/80 hover:text-bone"
+                                    : "text-ink-soft hover:text-ink"
+                            }`}
                         >
                             <FiSearch size={17} />
                         </button>
@@ -123,7 +173,9 @@ export default function Header() {
                         type="button"
                         aria-label="Abrir busca"
                         onClick={() => setBuscaAberta((v) => !v)}
-                        className="flex h-11 w-11 items-center justify-center text-ink-soft hover:text-ink xl:hidden"
+                        className={`flex h-11 w-11 items-center justify-center xl:hidden ${
+                            transparente ? "text-bone/80 hover:text-bone" : "text-ink-soft hover:text-ink"
+                        }`}
                     >
                         <FiSearch size={18} />
                     </button>
@@ -134,13 +186,15 @@ export default function Header() {
                      * operador. Sem isso o painel não tinha entrada nenhuma na
                      * loja — só a URL digitada à mão.
                      */}
-                    <MenuConta />
+                    <MenuConta transparente={transparente} />
 
                     <button
                         type="button"
                         onClick={abrir}
                         aria-label={`Carrinho com ${totalItens} ${totalItens === 1 ? "item" : "itens"}`}
-                        className="relative flex h-11 w-11 items-center justify-center text-ink hover:text-olive"
+                        className={`relative flex h-11 w-11 items-center justify-center ${
+                            transparente ? "text-bone hover:text-brass" : "text-ink hover:text-olive"
+                        }`}
                     >
                         <FiShoppingBag size={19} />
                         {totalItens > 0 && (
