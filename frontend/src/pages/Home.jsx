@@ -5,7 +5,6 @@ import Botao from "@/components/ui/Botao.jsx";
 import Skeleton, { SkeletonCard } from "@/components/ui/Skeleton.jsx";
 import CardProduto from "@/components/catalogo/CardProduto.jsx";
 import { useColecoes, useDestaques } from "@/hooks/useCatalogo.js";
-import { STORE } from "@/data/store.js";
 
 /**
  * Home editorial.
@@ -64,23 +63,21 @@ export default function Home() {
 
                 <div className="shell relative py-10 lg:py-28">
                     <div className="max-w-lg">
-                        <p className="font-sans text-xs uppercase tracking-widest text-brass">
-                            {!carregandoColecoes && colecaoDestaque
-                                ? `Em cartaz · ${colecaoDestaque.nome}`
-                                : "Peças de rua com propósito"}
-                        </p>
+                        {!carregandoColecoes && colecaoDestaque && (
+                            <p className="font-sans text-xs uppercase tracking-widest text-brass">
+                                Em cartaz · {colecaoDestaque.nome}
+                            </p>
+                        )}
 
-                        <h1 className="mt-4 font-display text-4xl leading-[1.05] tracking-tight text-bone sm:text-5xl lg:text-6xl">
-                            A beleza que
+                        <h1 className="font-display text-4xl leading-[1.05] tracking-tight text-bone sm:text-5xl lg:text-6xl">
+                            Peças de rua
                             <br />
-                            <em className="font-normal italic text-olive">não precisa</em>
-                            <br />
-                            gritar.
+                            com <em className="font-normal italic text-olive">propósito</em>.
                         </h1>
 
                         <p className="mt-6 max-w-md text-base leading-relaxed text-bone/70 lg:mt-8">
-                            {STORE.manifesto} Peças desenhadas para durar mais de uma estação,
-                            e para vestir bem tanto no domingo quanto na terça-feira.
+                            Corte oversized em algodão 220g, feita em lote pequeno. Boa pra
+                            usar todo dia, no culto ou na rua.
                         </p>
 
                         <div className="mt-8 flex flex-wrap items-center gap-6 lg:mt-10">
