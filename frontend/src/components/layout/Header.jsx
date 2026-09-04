@@ -27,15 +27,16 @@ export default function Header() {
     // outras paginas (e na propria Home ja rolada) ele fica no tamanho normal.
     const naHome = pathname === "/";
 
+    // A rolagem em si (barra solida no topo, vitrificada depois) vale pra
+    // qualquer pagina, nao so a Home.
     useEffect(() => {
-        if (!naHome) return undefined;
         function aoRolar() {
             setRolou(window.scrollY > LIMIAR_ROLAGEM);
         }
         aoRolar();
         window.addEventListener("scroll", aoRolar, { passive: true });
         return () => window.removeEventListener("scroll", aoRolar);
-    }, [naHome]);
+    }, []);
 
     const logoGrande = naHome && !rolou;
 
@@ -49,7 +50,11 @@ export default function Header() {
     }
 
     return (
-        <header className="sticky top-0 z-header border-b border-transparent bg-ink">
+        <header
+            className={`sticky top-0 z-header border-b border-transparent transition-colors duration-300 ${
+                rolou ? "bg-ink/75 backdrop-blur-md" : "bg-ink"
+            }`}
+        >
             <div className="shell flex h-24 items-center justify-between gap-6">
                 <button
                     type="button"
