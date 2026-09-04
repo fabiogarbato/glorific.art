@@ -3,7 +3,7 @@ export const STORE = Object.freeze({
     name: "glorific.art",
     legalName: "Glorific Art Comércio de Vestuário Ltda.",
     tagline: "A arte de glorificar",
-    manifesto: "Camiseta oversized de rua, com versículo na estampa. A gente faz pouca e faz direito.",
+    manifesto: "Camiseta oversized de rua, com versículo na estampa. Fazemos em lote pequeno.",
 
     contact: {
         email: "contato@glorific.art",
