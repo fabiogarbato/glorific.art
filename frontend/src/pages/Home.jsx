@@ -76,7 +76,7 @@ export default function Home() {
                         </h1>
 
                         <p className="mt-6 max-w-md text-base leading-relaxed text-bone/70 lg:mt-8">
-                            Corte oversized em algodão 220g, feita em lote pequeno. Boa pra
+                            Corte oversized em algodão 220g, feita em lote pequeno. Ideal para
                             usar todo dia, no culto ou na rua.
                         </p>
 
