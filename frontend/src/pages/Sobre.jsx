@@ -55,28 +55,11 @@ export default function Sobre() {
                             {STORE.manifesto}
                         </p>
 
-                        <div className="mt-8 max-w-xl space-y-5 text-base leading-relaxed text-ink-soft">
-                            <p>
-                                Antes de virar coleção, a Glorific foi um propósito: glorificar
-                                a Ele. A gente ama a Deus, e quis que isso aparecesse em roupa
-                                antes de aparecer em discurso. Anunciar Cristo não seria só
-                                palavra: seria corte, tecido, prazo cumprido, estampa que
-                                aguenta o uso do dia a dia. Pregando sem abrir a boca, do jeito
-                                que a roupa sozinha consegue.
-                            </p>
-                            <p>
-                                A Glorific nasceu de um incômodo simples: fé e estética de rua
-                                quase nunca dividem o mesmo cabide. De um lado, a camiseta
-                                gospel de estampa apressada. Do outro, o streetwear que não
-                                tem nada pra dizer. A gente não quis escolher.
-                            </p>
-                            <p>
-                                Cada peça é oversized, pesada, feita pra durar, e carrega uma
-                                estampa que é, ao mesmo tempo, arte de rua e confissão de fé.
-                                Glorificar não é um tema estampado na frente. É o cuidado com
-                                o traço, com o tecido e com quem vai vestir isso todo dia.
-                            </p>
-                        </div>
+                        <p className="mt-8 max-w-xl text-base leading-relaxed text-ink-soft">
+                            A Glorific existe pra colocar fé em roupa que aguenta o dia a dia:
+                            estampa com propósito, corte oversized, lote pequeno. Pregando sem
+                            abrir a boca.
+                        </p>
                     </div>
                 </div>
             </section>
@@ -100,41 +83,6 @@ export default function Sobre() {
                             </p>
                         </article>
                     ))}
-                </div>
-            </section>
-
-            {/* -------------------------------------------------------- PROPOSITO */}
-            <section className="border-y border-sand bg-linen">
-                <div className="shell grid gap-10 py-16 lg:grid-cols-12 lg:py-20">
-                    <div className="lg:col-span-4">
-                        <p className="eyebrow">O propósito</p>
-                        <p className="mt-6 font-display text-2xl italic leading-snug text-ink">
-                            O sagrado aparece pela estampa, não pela sobriedade.
-                        </p>
-                    </div>
-
-                    <div className="lg:col-span-8">
-                        <div className="max-w-2xl space-y-5 text-base leading-relaxed text-ink-soft">
-                            <p>
-                                Moda cristã, pra nós, não é evitar chamar atenção. É chamar
-                                atenção pro que importa. Uma camiseta que alguém pergunta "onde
-                                você comprou" é uma porta aberta pra falar de fé sem precisar
-                                dizer uma palavra antes.
-                            </p>
-                            <p>
-                                Por isso preferimos a coleção curta ao lançamento toda semana,
-                                e preferimos dizer que uma estampa esgotou a repor às pressas
-                                com um algodão fino. Oversized não é só estética: é a peça
-                                sobrando no corpo pra caber o resto: o testemunho, o incômodo
-                                bom, a pergunta que alguém vai fazer no elevador.
-                            </p>
-                            <p>
-                                Não prometemos perfeição. Prometemos ficha técnica honesta,
-                                estampa que não racha na segunda lavagem e uma resposta de
-                                gente quando algo sair errado.
-                            </p>
-                        </div>
-                    </div>
                 </div>
             </section>
 
