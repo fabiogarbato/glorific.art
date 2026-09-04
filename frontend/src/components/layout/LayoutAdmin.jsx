@@ -146,8 +146,8 @@ const GRUPOS = [
 const item = ({ isActive }) =>
     `flex items-center gap-3 border-l-2 px-4 py-3 font-sans text-xs uppercase tracking-widest transition-colors ${
         isActive
-            ? "border-brass bg-linen text-ink"
-            : "border-transparent text-ink-soft hover:bg-linen/60 hover:text-ink"
+            ? "border-primary bg-base-100 text-ink shadow-sm"
+            : "border-transparent text-ink-soft hover:bg-base-100/60 hover:text-ink"
     }`;
 
 export default function LayoutAdmin() {
@@ -255,7 +255,7 @@ export default function LayoutAdmin() {
 
     return (
         <div data-scheme="admin" data-theme="glorific-admin" className="flex min-h-screen bg-base-100 text-base-content">
-            <aside className="hidden w-64 shrink-0 border-r border-sand bg-base-100 lg:block">
+            <aside className="hidden w-64 shrink-0 border-r border-sand bg-base-200 lg:block">
                 <div className="sticky top-0 h-screen">{sidebar}</div>
             </aside>
 
@@ -267,7 +267,7 @@ export default function LayoutAdmin() {
                         className="absolute inset-0 h-full w-full bg-ink/40"
                         onClick={() => setGavetaAberta(false)}
                     />
-                    <div className="relative h-full w-72 border-r border-sand bg-base-100">
+                    <div className="relative h-full w-72 border-r border-sand bg-base-200">
                         {sidebar}
                     </div>
                 </div>

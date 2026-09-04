@@ -1,11 +1,10 @@
-import { FiArrowRight } from "react-icons/fi";
+import { FiArrowRight, FiRepeat, FiShield, FiTruck } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
 import Botao from "@/components/ui/Botao.jsx";
-import Badge from "@/components/ui/Badge.jsx";
 import Skeleton, { SkeletonCard } from "@/components/ui/Skeleton.jsx";
 import CardProduto from "@/components/catalogo/CardProduto.jsx";
-import { useCatalogo, useColecoes, useDestaques } from "@/hooks/useCatalogo.js";
+import { useColecoes, useDestaques } from "@/hooks/useCatalogo.js";
 import { STORE } from "@/data/store.js";
 
 /**
@@ -16,6 +15,12 @@ import { STORE } from "@/data/store.js";
  * TUDO vem da API: vitrine com `destaque=true` e a colecao marcada como
  * destaque no admin.
  */
+const GARANTIAS_HERO = [
+    { Icone: FiTruck, texto: "Frete cortesia acima de R$ 399" },
+    { Icone: FiRepeat, texto: "Troca gratuita em 30 dias" },
+    { Icone: FiShield, texto: "Compra segura e sem complicação" },
+];
+
 const PILARES = [
     {
         titulo: "Tecido natural",
@@ -38,32 +43,38 @@ export default function Home() {
     // A colecao em destaque e a marcada no admin; sem ela, a primeira vigente.
     const colecaoDestaque = colecoes.find((c) => c.destaque) ?? colecoes[0] ?? null;
 
-    // Sem banner de colecao, o hero usa a capa da ULTIMA peca publicada — e o
-    // mesmo criterio do link "Novidades" do menu (ordenacao "Novidade").
-    const precisaUltimaPeca = !colecaoDestaque?.urlMidiaBanner && !colecaoDestaque?.urlMidiaCapa;
-    const { produtos: ultimasPecas } = useCatalogo(
-        { ordenacao: "Novidade" },
-        { pageSize: 1 },
-    );
-    const ultimaPeca = precisaUltimaPeca ? (ultimasPecas[0] ?? null) : null;
-
     return (
         <div className="animate-fade-up">
-            {/* ---------------------------------------------------------- HERO */}
-            <section className="border-b border-sand bg-linen">
-                <div className="shell grid items-center gap-12 py-16 lg:grid-cols-12 lg:items-start lg:py-24">
-                    <div className="lg:col-span-6">
-                        {carregandoColecoes ? (
-                            <Skeleton className="h-3 w-48" />
-                        ) : (
-                            <p className="eyebrow">
-                                {colecaoDestaque
-                                    ? `Em cartaz · ${colecaoDestaque.nome}`
-                                    : STORE.tagline}
+            {/* ---------------------------------------------------------- HERO
+                Imagem de campanha fixa (fora do CMS de proposito, e arte de
+                marca, nao cadastro) — o "A arte de glorificar" e a assinatura
+                da marca ja vem impressos na propria foto, por isso o texto
+                real fica so a partir do titulo. */}
+            <section className="relative overflow-hidden bg-ink">
+                <img
+                    src="/hero-wall-bg.jpg"
+                    alt="Modelo vestindo camiseta oversized Glorific, parede com silhueta de igreja e skyline ao fundo"
+                    loading="eager"
+                    className="absolute inset-0 h-full w-full object-cover object-[50%_20%]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/80 to-ink/30 lg:via-ink/55 lg:to-transparent" />
+
+                <div className="shell relative py-14 lg:py-28">
+                    <div className="max-w-lg">
+                        <img
+                            src="/hero-logo-mark.png"
+                            alt=""
+                            aria-hidden="true"
+                            className="h-10 w-auto animate-pulse-suave opacity-90"
+                        />
+
+                        {!carregandoColecoes && colecaoDestaque && (
+                            <p className="mt-6 font-sans text-xs uppercase tracking-widest text-brass">
+                                Em cartaz · {colecaoDestaque.nome}
                             </p>
                         )}
 
-                        <h1 className="mt-6 font-display text-3xl leading-[1.05] tracking-tight text-ink sm:text-4xl">
+                        <h1 className="mt-4 font-display text-4xl leading-[1.05] tracking-tight text-bone sm:text-5xl lg:mt-6 lg:text-6xl">
                             A beleza que
                             <br />
                             <em className="font-normal italic text-olive">não precisa</em>
@@ -71,84 +82,37 @@ export default function Home() {
                             gritar.
                         </h1>
 
-                        <p className="mt-8 max-w-md text-base leading-relaxed text-ink-soft">
+                        <p className="mt-6 max-w-md text-base leading-relaxed text-bone/70 lg:mt-8">
                             {STORE.manifesto} Peças desenhadas para durar mais de uma estação,
                             e para vestir bem tanto no domingo quanto na terça-feira.
                         </p>
 
-                        <div className="mt-10 flex flex-wrap items-center gap-4">
-                            <Botao to="/catalogo" tamanho="lg">
+                        <div className="mt-8 flex flex-wrap items-center gap-6 lg:mt-10">
+                            <Botao
+                                to="/catalogo"
+                                tamanho="lg"
+                                className="focus-visible:ring-offset-ink"
+                            >
                                 Ver a coleção <FiArrowRight size={14} aria-hidden="true" />
                             </Botao>
-                            <Botao to="/sobre" variante="texto" tamanho="lg">
+                            <Link
+                                to="/sobre"
+                                className="text-xs font-sans uppercase tracking-widest text-bone/70 underline underline-offset-4 decoration-bone/30 transition-colors hover:text-bone hover:decoration-bone/70"
+                            >
                                 Nossa história
-                            </Botao>
+                            </Link>
                         </div>
 
-                        <div className="mt-12 flex flex-wrap items-center gap-x-8 gap-y-3">
-                            <span className="text-xs uppercase tracking-widest text-taupe">
-                                Frete cortesia acima de R$ 399
-                            </span>
-                            <span className="text-xs uppercase tracking-widest text-taupe">
-                                Troca gratuita em 30 dias
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* Bloco de imagem: banner da colecao em destaque > capa da ultima peca
-                        publicada > degrade da paleta com a epigrafe (quando o catalogo
-                        ainda esta vazio de verdade). */}
-                    <div className="lg:col-span-6">
-                        <div className="relative">
-                            {colecaoDestaque?.urlMidiaBanner || colecaoDestaque?.urlMidiaCapa ? (
-                                <Link
-                                    to={`/colecao/${colecaoDestaque.slug}`}
-                                    className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-olive focus-visible:ring-offset-4 focus-visible:ring-offset-base-200"
+                        <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4 border-t border-bone/15 pt-6 lg:mt-14 lg:pt-8">
+                            {GARANTIAS_HERO.map(({ Icone, texto }) => (
+                                <span
+                                    key={texto}
+                                    className="flex items-center gap-2 text-[11px] uppercase tracking-widest text-bone/60"
                                 >
-                                    <div className="aspect-product w-full overflow-hidden lg:aspect-auto lg:h-[520px]">
-                                        <img
-                                            src={
-                                                colecaoDestaque.urlMidiaBanner ||
-                                                colecaoDestaque.urlMidiaCapa
-                                            }
-                                            alt={colecaoDestaque.nome}
-                                            loading="eager"
-                                            className="h-full w-full object-cover"
-                                        />
-                                    </div>
-                                </Link>
-                            ) : ultimaPeca ? (
-                                <Link
-                                    to={`/produto/${ultimaPeca.slug}`}
-                                    className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-olive focus-visible:ring-offset-4 focus-visible:ring-offset-base-200"
-                                >
-                                    <div className="aspect-product w-full overflow-hidden lg:aspect-auto lg:h-[520px]">
-                                        <img
-                                            src={ultimaPeca.urlImagemCapa}
-                                            alt={ultimaPeca.altImagemCapa || ultimaPeca.nome}
-                                            loading="eager"
-                                            className="h-full w-full object-cover"
-                                        />
-                                    </div>
-                                </Link>
-                            ) : (
-                                <>
-                                    <div className="aspect-product w-full bg-gradient-to-b from-sand via-linen to-bone lg:aspect-auto lg:h-[520px]" />
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center px-8 text-center">
-                                        <span className="font-display text-4xl leading-none text-ink/15">
-                                            ✦
-                                        </span>
-                                        <p className="mt-6 max-w-xs font-display text-xl italic leading-snug text-ink/70">
-                                            {colecaoDestaque?.epigrafe ??
-                                                "“Que a graça esteja no detalhe, e o detalhe no silêncio.”"}
-                                        </p>
-                                    </div>
-                                </>
-                            )}
-
-                            <div className="absolute left-4 top-4">
-                                <Badge variante="destaque">Novo</Badge>
-                            </div>
+                                    <Icone size={15} className="shrink-0 text-brass" aria-hidden="true" />
+                                    {texto}
+                                </span>
+                            ))}
                         </div>
                     </div>
                 </div>

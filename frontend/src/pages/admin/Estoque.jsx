@@ -51,6 +51,16 @@ import { formatarDataHora } from "@/utils/datas.js";
  * produto escolhido e o extrato do razão.
  */
 
+/**
+ * Barra de saúde de estoque (2px sob a linha): olive confortável, brass perto
+ * do mínimo, danger esgotado. Le direto do disponivel/minimo já normalizados.
+ */
+function corSaudeEstoque(l) {
+    if (l.disponivel <= 0) return "border-b-2 border-danger";
+    if (l.abaixoDoMinimo) return "border-b-2 border-brass";
+    return "border-b-2 border-olive";
+}
+
 /** As duas origens de saldo têm nomes de campo diferentes. Uma forma só aqui. */
 function normalizarLinha(bruto, produto) {
     // EstoqueVariacaoResponseDto (alerta de mínimo)
@@ -380,6 +390,7 @@ export default function Estoque() {
                             dados={linhasAlerta}
                             carregando={alerta.isLoading}
                             chaveLinha={(l) => l.idVariacao}
+                            classeLinha={corSaudeEstoque}
                             vazio="Nenhum SKU abaixo do mínimo."
                         />
                     </>
@@ -460,6 +471,7 @@ export default function Estoque() {
                                     dados={linhasGrade}
                                     carregando={grade.isLoading}
                                     chaveLinha={(l) => l.idVariacao}
+                                    classeLinha={corSaudeEstoque}
                                     vazio="Esta peça ainda não tem variações cadastradas."
                                 />
                             </>

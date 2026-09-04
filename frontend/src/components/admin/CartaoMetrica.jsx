@@ -37,7 +37,7 @@ export default function CartaoMetrica({
     );
 
     const classe =
-        "block w-full border border-sand bg-linen px-4 py-5 text-left transition-colors";
+        "block w-full border border-sand bg-base-100 px-4 py-5 text-left shadow-sm transition-colors";
 
     if (to) {
         return (

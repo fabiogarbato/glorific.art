@@ -90,7 +90,7 @@ export function SkeletonCartoes({ quantidade = 4 }) {
     return (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {Array.from({ length: quantidade }).map((_, i) => (
-                <div key={i} className="border border-sand bg-linen px-4 py-5">
+                <div key={i} className="border border-sand bg-base-100 px-4 py-5 shadow-sm">
                     <Skeleton className="h-3 w-24" />
                     <Skeleton className="mt-4 h-7 w-32" />
                 </div>

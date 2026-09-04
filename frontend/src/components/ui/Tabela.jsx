@@ -36,6 +36,7 @@ export default function Tabela({
     linhasSkeleton = 6,
     vazio = "Nenhum registro encontrado.",
     className = "",
+    classeLinha,
 }) {
     return (
         <div className={`w-full overflow-x-auto border border-sand bg-base-100 ${className}`}>
@@ -107,9 +108,9 @@ export default function Tabela({
                             <tr
                                 key={chaveLinha(linha, i)}
                                 onClick={onLinhaClick ? () => onLinhaClick(linha) : undefined}
-                                className={`border-b border-sand/60 transition-colors even:bg-linen/50 ${
+                                className={`transition-colors even:bg-linen/50 ${
                                     onLinhaClick ? "cursor-pointer hover:bg-linen" : ""
-                                }`}
+                                } ${classeLinha ? classeLinha(linha) : "border-b border-sand/60"}`}
                             >
                                 {colunas.map((col) => (
                                     <td

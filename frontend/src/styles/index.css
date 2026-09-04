@@ -45,11 +45,11 @@
  */
 [data-scheme="admin"] {
     --c-bone: 255 255 255;
-    --c-linen: 247 248 250;
-    --c-sand: 228 231 235;
-    --c-taupe: 156 163 175;
-    --c-ink: 17 24 39;
-    --c-ink-soft: 75 85 99;
+    --c-linen: 247 247 243;
+    --c-sand: 232 230 224;
+    --c-taupe: 107 107 98;
+    --c-ink: 23 23 15;
+    --c-ink-soft: 74 74 66;
 }
 
 @layer base {

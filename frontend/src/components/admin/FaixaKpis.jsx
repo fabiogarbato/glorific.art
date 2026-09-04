@@ -16,13 +16,13 @@ export default function FaixaKpis({ itens = [], carregando = false, className = 
         >
             {carregando
                 ? Array.from({ length: 4 }).map((_, i) => (
-                      <article key={`kpi-${i}`} className="border border-sand bg-linen px-4 py-5">
+                      <article key={`kpi-${i}`} className="border border-sand bg-base-100 px-4 py-5 shadow-sm">
                           <Skeleton className="h-3 w-24" />
                           <Skeleton className="mt-4 h-6 w-16" />
                       </article>
                   ))
                 : itens.map(({ rotulo, valor, Icone, alerta, ajuda }) => (
-                      <article key={rotulo} className="border border-sand bg-linen px-4 py-5">
+                      <article key={rotulo} className="border border-sand bg-base-100 px-4 py-5 shadow-sm">
                           <div className="flex items-center gap-2">
                               {Icone && (
                                   <Icone

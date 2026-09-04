@@ -210,6 +210,11 @@ export default function ListaProdutos() {
         },
     ];
 
+    /** Barra de saúde de estoque (2px sob a linha): so ha o agregado do produto
+     * aqui (sem minimo por peça), entao so distingue esgotado de confortavel. */
+    const corSaudeEstoque = (p) =>
+        (p.estoqueTotalDisponivel ?? 0) === 0 ? "border-b-2 border-danger" : "border-b-2 border-olive";
+
     const semFiltroAplicado = !lista.filtros.q && !lista.filtros.categoria;
 
     return (
@@ -390,6 +395,7 @@ export default function ListaProdutos() {
                                     dados={dados}
                                     ordenacao={ordenacao}
                                     onOrdenar={ordenar}
+                                    classeLinha={corSaudeEstoque}
                                 />
                             </div>
 
