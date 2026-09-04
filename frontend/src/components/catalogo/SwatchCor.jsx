@@ -43,7 +43,7 @@ export default function SwatchCor({
             type="button"
             onClick={() => onSelecionar(cor)}
             aria-pressed={selecionada}
-            aria-label={indisponivel ? `${cor?.nome} — sem peças disponíveis` : cor?.nome}
+            aria-label={indisponivel ? `${cor?.nome}, sem peças disponíveis` : cor?.nome}
             title={cor?.nome}
             className={[
                 base,

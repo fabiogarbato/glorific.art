@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Glorific.Application.Common;
@@ -7,16 +8,20 @@ using Glorific.Application.Models.MelhorEnvio;
 using Glorific.Application.Ports;
 using Glorific.Application.Ports.Options;
 using Glorific.Domain.Enums;
+using Glorific.Domain.Entities.Integracoes;
+using Glorific.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Glorific.Infrastructure.Integrations.MelhorEnvio;
 
 /// <summary>
-/// Adaptador do microservico integracaoMelhorEnvio (NAO da API do Melhor Envio direta: o OAuth,
-/// a renovacao do token e o passthrough do corpo cru ficam la).
+/// Adaptador da API REAL do Melhor Envio (OAuth2 "authorization code" — nao existe mais
+/// microservico intermediario nenhum).
 ///
-/// Este e o unico lugar do sistema que conhece o contrato do parceiro. Tres decisoes moram aqui:
+/// Este e o unico lugar do sistema que conhece o contrato do parceiro. Quatro decisoes moram
+/// aqui:
 ///
 /// 1. TRADUCAO DE UNIDADE NA FRONTEIRA. Dentro do sistema dinheiro e centavos inteiro e peso e
 ///    grama inteiro; o parceiro fala reais e quilos decimais, e em dois campos exige STRING
@@ -24,45 +29,57 @@ namespace Glorific.Infrastructure.Integrations.MelhorEnvio;
 ///
 /// 2. TODA FALHA VIRA MelhorEnvioApiException. Nenhum HttpResponseMessage, JsonElement ou status
 ///    code cru cruza a porta. Os servicos decidem por EhErroCliente / EhFalhaComunicacao /
-///    EhContaNaoConectada, porque status code aqui e HTTP do ME repassado: um 404 significa
-///    "conta nao conectada" (problema operacional nosso), nao "recurso inexistente".
+///    EhContaNaoConectada, porque status code aqui e HTTP do ME repassado, e um 401/404 pode
+///    significar "conta nao conectada" (problema operacional nosso), nao "credencial invalida".
 ///
 /// 3. O CORPO CRU E PRESERVADO em RawJson de cada resultado, para gravar em
 ///    envios.raw_ultima_resposta (jsonb). Quando o parceiro muda o formato sem avisar, e essa
 ///    coluna que permite reconstruir o que aconteceu num pedido especifico.
 ///
-/// O accountId nao aparece na porta de proposito: e multi-tenancy do parceiro, detalhe deste
-/// adaptador, e vai como query em TODAS as rotas.
+/// 4. O TOKEN OAuth E GERENCIADO AQUI, NAO EM CAMADA NENHUMA ACIMA. Toda chamada de negocio
+///    passa por ObterTokenValidoAsync antes de sair na rede: le contas_melhor_envio, renova via
+///    refresh_token se faltam menos de 5 min para expirar, e persiste a renovacao — igual um SDK
+///    OAuth de verdade faria. O accountId nao aparece na porta de proposito: e multi-tenancy
+///    local (hoje sempre "glorific"), detalhe deste adaptador.
 /// </summary>
 public sealed class MelhorEnvioClient : IMelhorEnvioClient
 {
-    private const string HeaderApiKey = "X-Api-Key";
+    private const string CaminhoAutorizar = "/oauth/authorize";
+    private const string CaminhoToken = "/oauth/token";
 
-    // Rotas do MICROSERVICO (nao as do Melhor Envio). Constantes para o typo virar erro de
-    // compilacao: caminho errado no HttpClient devolve 404 do host certo, que e o erro mais
-    // caro de diagnosticar nesta integracao.
-    private const string RotaCotacao = "/api/shipment/calculate";
+    // Rotas REAIS da API v2 do Melhor Envio. Constantes para o typo virar erro de compilacao:
+    // caminho errado no HttpClient devolve 404 do host certo, que e o erro mais caro de
+    // diagnosticar nesta integracao.
+    private const string RotaCotacao = "/api/v2/me/shipment/calculate";
 
-    private const string RotaCarrinho = "/api/cart";
-    private const string RotaCompra = "/api/cart/checkout";
-    private const string RotaGerar = "/api/labels/generate";
-    private const string RotaImprimir = "/api/labels/print";
-    private const string RotaRastreio = "/api/shipment/tracking";
-    private const string RotaCancelar = "/api/shipment/cancel";
-    private const string RotaSaldo = "/api/me/balance";
-    private const string RotaStatusConta = "/api/auth/status";
+    private const string RotaCarrinho = "/api/v2/me/cart";
+    private const string RotaCompra = "/api/v2/me/shipment/checkout";
+    private const string RotaGerar = "/api/v2/me/shipment/generate";
+    private const string RotaImprimir = "/api/v2/me/shipment/print";
+    private const string RotaRastreio = "/api/v2/me/shipment/tracking";
+    private const string RotaCancelar = "/api/v2/me/shipment/cancel";
+    private const string RotaSaldo = "/api/v2/me/balance";
+
+    /// <summary>
+    /// O Melhor Envio exige um User-Agent identificavel em toda chamada — requisicao sem isso
+    /// pode ser recusada. Formato pedido por eles: "Aplicacao (email de contato)".
+    /// </summary>
+    private const string UserAgent = "Glorific (integracoes@glorific.art)";
 
     private readonly HttpClient _http;
     private readonly MelhorEnvioOptions _opcoes;
+    private readonly GlorificContext _contexto;
     private readonly ILogger<MelhorEnvioClient> _logger;
 
     public MelhorEnvioClient(
         HttpClient http,
         IOptions<MelhorEnvioOptions> opcoes,
+        GlorificContext contexto,
         ILogger<MelhorEnvioClient> logger)
     {
         _http = http ?? throw new ArgumentNullException(nameof(http));
         _opcoes = opcoes?.Value ?? throw new ArgumentNullException(nameof(opcoes));
+        _contexto = contexto ?? throw new ArgumentNullException(nameof(contexto));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         // BaseAddress e Timeout normalmente ja vem do registro tipado no Program.cs. O fallback
@@ -70,17 +87,69 @@ public sealed class MelhorEnvioClient : IMelhorEnvioClient
         if (_http.BaseAddress is null && !string.IsNullOrWhiteSpace(_opcoes.BaseUrl))
             _http.BaseAddress = new Uri(_opcoes.BaseUrl.TrimEnd('/'), UriKind.Absolute);
 
-        if (string.IsNullOrWhiteSpace(_opcoes.ApiKey))
+        if (string.IsNullOrWhiteSpace(_opcoes.ClientId) || string.IsNullOrWhiteSpace(_opcoes.ClientSecret))
         {
-            // Sem chave TODA rota do microservico responde 401 com corpo vazio. Avisar aqui, no
-            // boot do escopo, e mais barato que descobrir no primeiro cliente que cotar frete.
             _logger.LogWarning(
-                "MelhorEnvio:ApiKey nao configurada. Toda chamada ao servico de frete vai responder 401.");
+                "MelhorEnvio:ClientId/ClientSecret nao configurados. A autorizacao OAuth vai falhar.");
         }
-        else if (!_http.DefaultRequestHeaders.Contains(HeaderApiKey))
+    }
+
+    // ------------------------------------------------------------------
+    // OAuth: autorizar e conectar
+    // ------------------------------------------------------------------
+
+    /// <inheritdoc />
+    public string ObterUrlAutorizacao(string state)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(state);
+
+        var parametros = new List<string>
         {
-            _http.DefaultRequestHeaders.Add(HeaderApiKey, _opcoes.ApiKey.Trim());
+            $"client_id={Uri.EscapeDataString(_opcoes.ClientId)}",
+            $"redirect_uri={Uri.EscapeDataString(_opcoes.RedirectUri)}",
+            "response_type=code",
+            $"scope={Uri.EscapeDataString(_opcoes.Escopo)}",
+            $"state={Uri.EscapeDataString(state)}",
+        };
+
+        var raiz = (_http.BaseAddress?.ToString() ?? _opcoes.BaseUrl).TrimEnd('/');
+        return $"{raiz}{CaminhoAutorizar}?{string.Join('&', parametros)}";
+    }
+
+    /// <inheritdoc />
+    public async Task ConectarAsync(string code, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(code);
+
+        var token = await TrocarPorTokenAsync(
+            new Dictionary<string, string>
+            {
+                ["grant_type"] = "authorization_code",
+                ["client_id"] = _opcoes.ClientId,
+                ["client_secret"] = _opcoes.ClientSecret,
+                ["redirect_uri"] = _opcoes.RedirectUri,
+                ["code"] = code,
+            },
+            ct);
+
+        var conta = await _contexto.ContasMelhorEnvio
+            .OrderBy(c => c.Id)
+            .FirstOrDefaultAsync(ct);
+
+        if (conta is null)
+        {
+            conta = new ContaMelhorEnvio { ContaId = _opcoes.ContaId };
+            await _contexto.ContasMelhorEnvio.AddAsync(conta, ct);
         }
+
+        AplicarToken(conta, token);
+
+        await _contexto.SaveChangesAsync(ct);
+
+        _logger.LogInformation(
+            "Conta '{ContaId}' do Melhor Envio conectada via OAuth. Expira em {ExpiraEm}.",
+            conta.ContaId,
+            conta.ExpiraEmUtc);
     }
 
     // ------------------------------------------------------------------
@@ -513,38 +582,30 @@ public sealed class MelhorEnvioClient : IMelhorEnvioClient
     /// <inheritdoc />
     public async Task<StatusContaMelhorEnvio> VerificarStatusContaAsync(CancellationToken ct = default)
     {
-        try
-        {
-            var resposta = await EnviarAsync(
-                HttpMethod.Get, RotaStatusConta, corpo: null, "verificar a conta de frete", ct);
+        // Local, sem chamar o parceiro: nao existe endpoint "status" na API real do ME. O que
+        // importa pro healthcheck e o que ESTA GRAVADO aqui, que e exatamente o que
+        // ObterTokenValidoAsync vai usar na proxima chamada de negocio.
+        var conta = await _contexto.ContasMelhorEnvio
+            .AsNoTracking()
+            .OrderBy(c => c.Id)
+            .FirstOrDefaultAsync(ct);
 
-            // UNICO endpoint com contrato tipado do microservico: camelCase, e nao o snake_case
-            // do passthrough. Ler com as opcoes erradas devolveria tudo zerado sem erro nenhum.
-            var payload = JsonSerializer.Deserialize<StatusContaPayload>(
-                resposta.Bruto, MelhorEnvioJson.RespostaMicroservico);
-
-            return new StatusContaMelhorEnvio
-            {
-                Conectada = payload?.Connected ?? false,
-                ContaId = payload?.AccountId ?? _opcoes.ContaId,
-                TipoToken = payload?.TokenType,
-                Escopo = payload?.Scope,
-                ExpiraEmUtc = payload?.ExpiresAtUtc,
-                ExpiraEmSegundos = payload?.ExpiresInSeconds,
-                PrecisaRenovar = payload?.NeedsRefresh ?? false
-            };
-        }
-        catch (MelhorEnvioApiException excecao) when (excecao.StatusCode == 404)
-        {
-            // Contrato do microservico: /api/auth/status nunca deveria dar 404, mas se der e
-            // porque a conta nao existe. Isto e healthcheck: "desconectada" e uma resposta
-            // valida, nao um erro que derruba o painel.
-            _logger.LogWarning(
-                "Conta '{ContaId}' do Melhor Envio respondeu 404 no status. Tratando como desconectada.",
-                _opcoes.ContaId);
-
+        if (conta is null || string.IsNullOrWhiteSpace(conta.AccessToken))
             return new StatusContaMelhorEnvio { Conectada = false, ContaId = _opcoes.ContaId };
-        }
+
+        var expiraEmUtc = conta.ExpiraEmUtc;
+        var restante = expiraEmUtc.HasValue ? expiraEmUtc.Value - DateTime.UtcNow : (TimeSpan?)null;
+
+        return new StatusContaMelhorEnvio
+        {
+            Conectada = true,
+            ContaId = conta.ContaId,
+            TipoToken = conta.TipoToken,
+            Escopo = conta.Escopo,
+            ExpiraEmUtc = expiraEmUtc.HasValue ? new DateTimeOffset(expiraEmUtc.Value, TimeSpan.Zero) : null,
+            ExpiraEmSegundos = restante.HasValue ? (long)Math.Max(0, restante.Value.TotalSeconds) : null,
+            PrecisaRenovar = restante is null || restante.Value < TimeSpan.FromMinutes(5)
+        };
     }
 
     // ------------------------------------------------------------------
@@ -564,9 +625,12 @@ public sealed class MelhorEnvioClient : IMelhorEnvioClient
         string operacao,
         CancellationToken ct)
     {
-        var rota = ComAccountId(caminho);
+        var token = await ObterTokenValidoAsync(ct);
 
-        using var requisicao = new HttpRequestMessage(metodo, rota);
+        using var requisicao = new HttpRequestMessage(metodo, caminho);
+        requisicao.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        requisicao.Headers.UserAgent.ParseAdd(UserAgent);
+        requisicao.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
         if (corpo is not null)
             requisicao.Content = JsonContent.Create(corpo, corpo.GetType(), options: MelhorEnvioJson.Envio);
@@ -641,13 +705,120 @@ public sealed class MelhorEnvioClient : IMelhorEnvioClient
     }
 
     /// <summary>
-    /// accountId em TODA rota — inclusive nas de auth. E a chave multi-tenant da tabela de
-    /// tokens do microservico; sem ela ele cai na conta "default", que em producao nao existe.
+    /// Le o token gravado; renova sozinho (via refresh_token) quando faltam menos de 5 min para
+    /// expirar. Toda chamada de negocio passa por aqui antes de sair na rede — e o unico lugar
+    /// do sistema que decide "esse token ainda serve".
     /// </summary>
-    private string ComAccountId(string caminho)
+    private async Task<string> ObterTokenValidoAsync(CancellationToken ct)
     {
-        var separador = caminho.Contains('?', StringComparison.Ordinal) ? '&' : '?';
-        return $"{caminho}{separador}accountId={Uri.EscapeDataString(_opcoes.ContaId ?? string.Empty)}";
+        var conta = await _contexto.ContasMelhorEnvio
+            .OrderBy(c => c.Id)
+            .FirstOrDefaultAsync(ct);
+
+        if (conta is null || string.IsNullOrWhiteSpace(conta.AccessToken))
+            throw new MelhorEnvioApiException(
+                "Conta não conectada ao Melhor Envio. Autorize novamente pelo painel.",
+                statusCode: 404);
+
+        var expiraEm = conta.ExpiraEmUtc ?? DateTime.MinValue;
+        if (expiraEm > DateTime.UtcNow.AddMinutes(5))
+            return conta.AccessToken;
+
+        if (string.IsNullOrWhiteSpace(conta.RefreshToken))
+            throw new MelhorEnvioApiException(
+                "Conta não conectada ao Melhor Envio. Autorize novamente pelo painel.",
+                statusCode: 404);
+
+        _logger.LogInformation(
+            "Token do Melhor Envio perto de expirar ({ExpiraEm}), renovando.", expiraEm);
+
+        var token = await TrocarPorTokenAsync(
+            new Dictionary<string, string>
+            {
+                ["grant_type"] = "refresh_token",
+                ["client_id"] = _opcoes.ClientId,
+                ["client_secret"] = _opcoes.ClientSecret,
+                ["refresh_token"] = conta.RefreshToken,
+            },
+            ct);
+
+        AplicarToken(conta, token);
+        await _contexto.SaveChangesAsync(ct);
+
+        return conta.AccessToken!;
+    }
+
+    /// <summary>
+    /// POST /oauth/token — usado tanto na troca do "code" inicial quanto na renovacao via
+    /// refresh_token; so o grant_type e os campos do form mudam.
+    /// </summary>
+    private async Task<(string AccessToken, string? RefreshToken, string? TipoToken, string? Escopo, DateTime ExpiraEmUtc)>
+        TrocarPorTokenAsync(Dictionary<string, string> campos, CancellationToken ct)
+    {
+        using var requisicao = new HttpRequestMessage(HttpMethod.Post, CaminhoToken)
+        {
+            Content = new FormUrlEncodedContent(campos),
+        };
+        requisicao.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        requisicao.Headers.UserAgent.ParseAdd(UserAgent);
+
+        HttpResponseMessage resposta;
+
+        try
+        {
+            resposta = await _http.SendAsync(requisicao, ct);
+        }
+        catch (HttpRequestException excecao)
+        {
+            throw new MelhorEnvioApiException(
+                "Não foi possível falar com o Melhor Envio para autenticar.",
+                statusCode: null,
+                corpoBruto: null,
+                innerException: excecao);
+        }
+
+        var bruto = await resposta.Content.ReadAsStringAsync(ct);
+
+        if (!resposta.IsSuccessStatusCode)
+            throw new MelhorEnvioApiException(
+                $"O Melhor Envio recusou a autenticação (HTTP {(int)resposta.StatusCode}).",
+                (int)resposta.StatusCode,
+                bruto);
+
+        using var documento = JsonDocument.Parse(bruto);
+        var raiz = documento.RootElement;
+
+        var accessToken = MelhorEnvioJson.Texto(raiz, "access_token");
+
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new MelhorEnvioApiException(
+                "O Melhor Envio não devolveu um token de acesso.", statusCode: 502, corpoBruto: bruto);
+
+        var expiraEmSegundos = MelhorEnvioJson.Inteiro(raiz, "expires_in") ?? 0;
+
+        return (
+            accessToken,
+            MelhorEnvioJson.Texto(raiz, "refresh_token"),
+            MelhorEnvioJson.Texto(raiz, "token_type") ?? "Bearer",
+            MelhorEnvioJson.Texto(raiz, "scope"),
+            DateTime.UtcNow.AddSeconds(expiraEmSegundos));
+    }
+
+    private static void AplicarToken(
+        ContaMelhorEnvio conta,
+        (string AccessToken, string? RefreshToken, string? TipoToken, string? Escopo, DateTime ExpiraEmUtc) token)
+    {
+        conta.AccessToken = token.AccessToken;
+
+        // Alguns provedores OAuth NAO devolvem refresh_token novo na renovacao — so na primeira
+        // autorizacao. Nao sobrescrever com null perderia a capacidade de renovar de novo.
+        if (!string.IsNullOrWhiteSpace(token.RefreshToken))
+            conta.RefreshToken = token.RefreshToken;
+
+        conta.TipoToken = token.TipoToken;
+        conta.Escopo = token.Escopo;
+        conta.ExpiraEmUtc = token.ExpiraEmUtc;
+        conta.AtualizadoEmUtc = DateTime.UtcNow;
     }
 
     /// <summary>
@@ -682,7 +853,7 @@ public sealed class MelhorEnvioClient : IMelhorEnvioClient
         }
 
         return status == 401
-            ? $"O servico de frete recusou nossa credencial ao {operacao}. Verifique MelhorEnvio:ApiKey."
+            ? $"O servico de frete recusou nossa credencial ao {operacao}. A conta pode precisar ser reconectada no painel."
             : $"O servico de frete recusou a operacao ({operacao}) com HTTP {status}.";
     }
 
@@ -774,17 +945,5 @@ public sealed class MelhorEnvioClient : IMelhorEnvioClient
         }
 
         return eventos;
-    }
-
-    /// <summary>Espelho de TokenStatusResponse do microservico (camelCase, unico tipado).</summary>
-    private sealed record StatusContaPayload
-    {
-        public bool Connected { get; init; }
-        public string? AccountId { get; init; }
-        public string? TokenType { get; init; }
-        public string? Scope { get; init; }
-        public DateTimeOffset? ExpiresAtUtc { get; init; }
-        public long? ExpiresInSeconds { get; init; }
-        public bool NeedsRefresh { get; init; }
     }
 }

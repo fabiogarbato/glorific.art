@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
     FiAlertTriangle,
     FiDollarSign,
@@ -25,7 +25,9 @@ import Botao from "@/components/ui/Botao.jsx";
 import Skeleton from "@/components/ui/Skeleton.jsx";
 
 import { useDashboard } from "@/hooks/useDashboard.js";
+import { useConectarMelhorEnvio } from "@/hooks/admin/useMelhorEnvioAdmin.js";
 import { usePermissoes } from "@/hooks/usePermissoes.js";
+import { useToast } from "@/hooks/useToast.js";
 import { POLITICAS } from "@/lib/permissoes.js";
 import {
     fimDoDiaLocal,
@@ -54,6 +56,43 @@ import { formatarData, formatarDataHora, formatarRelativo } from "@/utils/datas.
  */
 export default function Dashboard() {
     const { pode } = usePermissoes();
+    const navegar = useNavigate();
+    const toast = useToast();
+    const { completar } = useConectarMelhorEnvio();
+
+    // Retorno do OAuth do Melhor Envio: o endereço de redirecionamento cadastrado no aplicativo
+    // é a raiz do admin (só assim o navegador chega aqui já com o cookie de sessão do admin —
+    // ver useMelhorEnvioAdmin.js e MelhorEnvioAdminController). Só roda uma vez: a troca do
+    // "code" é de uso único, então tentar de novo num re-render só daria erro à toa.
+    useEffect(() => {
+        const parametros = new URLSearchParams(window.location.search);
+        const code = parametros.get("code");
+        const state = parametros.get("state");
+        const erro = parametros.get("error_description") || parametros.get("error");
+
+        if (!code && !erro) return;
+
+        window.history.replaceState(null, "", window.location.pathname);
+
+        if (erro) {
+            toast.error("Melhor Envio recusou a conexão: " + erro);
+            return;
+        }
+
+        if (!state) return;
+
+        completar
+            .mutateAsync({ code, state })
+            .then(() => {
+                toast.success("Melhor Envio conectado.");
+                navegar("/admin/configuracoes");
+            })
+            .catch(() => {
+                toast.error("Não foi possível conectar o Melhor Envio. Tente de novo.");
+            });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const [periodo, setPeriodo] = useState(() => {
         const { de, ate } = intervaloDoPreset(PRESET_PADRAO);
         return {

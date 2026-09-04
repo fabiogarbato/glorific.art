@@ -44,6 +44,18 @@ export const midiasAdminService = {
         const { data } = await api.put(`${BASE}/${id}`, { altText });
         return data;
     },
+
+    /**
+     * POST /api/v1/admin/midias/{id}/gerar-texto-alternativo
+     * Le a propria imagem e alt texts de outras midias do acervo, devolve so o TEXTO sugerido —
+     * nao salva nada. Quem grava e atualizarAltText, quando o admin confirmar/editar.
+     */
+    async gerarTextoAlternativo(id) {
+        const { data } = await api.post(`${BASE}/${id}/gerar-texto-alternativo`, null, {
+            timeout: 70000, // a OpenAI le a imagem e pode passar do timeout padrao (20s)
+        });
+        return data?.descricao ?? '';
+    },
 };
 
 export default midiasAdminService;

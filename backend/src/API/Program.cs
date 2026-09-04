@@ -7,6 +7,7 @@ using Glorific.Application.Ports.Options;
 using Glorific.Infrastructure;
 using Glorific.Infrastructure.Data;
 using Glorific.Infrastructure.Integrations.MelhorEnvio;
+using Glorific.Infrastructure.Integrations.OpenAI;
 using Glorific.Infrastructure.Seeding;
 using Mapster;
 using MapsterMapper;
@@ -124,7 +125,7 @@ RequiredSecret.Require(
 // subir a API local para mexer no catalogo sem ter credencial de gateway de pagamento.
 RequiredSecret.RequireSe(!ehDesenvolvimento, builder.Configuration, "Google:ClientId", "Google__ClientId");
 RequiredSecret.RequireSe(!ehDesenvolvimento, builder.Configuration, "InfinitePay:Handle", "InfinitePay__Handle");
-RequiredSecret.RequireSe(!ehDesenvolvimento, builder.Configuration, "MelhorEnvio:ApiKey", "MelhorEnvio__ApiKey");
+RequiredSecret.RequireSe(!ehDesenvolvimento, builder.Configuration, "MelhorEnvio:ClientSecret", "MelhorEnvio__ClientSecret");
 
 #endregion
 
@@ -179,6 +180,7 @@ BindOpcoes<GoogleOptions>(GoogleOptions.SectionName);
 BindOpcoes<InfinitePayOptions>(InfinitePayOptions.SectionName);
 BindOpcoes<MelhorEnvioOptions>(MelhorEnvioOptions.SectionName);
 BindOpcoes<FreteOptions>(FreteOptions.SectionName);
+BindOpcoes<OpenAiOptions>(OpenAiOptions.SectionName);
 
 void BindOpcoes<TOpcoes>(string secao) where TOpcoes : class
 {
@@ -224,6 +226,39 @@ builder.Services.AddHttpClient(NomesHttpClient.ViaCep, cliente =>
 {
     cliente.BaseAddress = new Uri("https://viacep.com.br/");
     cliente.Timeout = TimeSpan.FromSeconds(10);
+});
+
+var openAi = builder.Configuration
+    .GetSection(OpenAiOptions.SectionName).Get<OpenAiOptions>() ?? new OpenAiOptions();
+
+// Client TIPADO: quem resolve IGeradorDescricaoProduto recebe o adaptador ja com BaseAddress,
+// timeout e o header Authorization (posto pelo proprio adaptador, a partir das options).
+builder.Services.AddHttpClient<IGeradorDescricaoProduto, GeradorDescricaoOpenAi>(
+    NomesHttpClient.OpenAi, cliente =>
+{
+    cliente.BaseAddress = new Uri(openAi.BaseUrl);
+    cliente.Timeout = TimeSpan.FromSeconds(openAi.TimeoutSegundos);
+});
+
+builder.Services.AddHttpClient<IGeradorTextoAlternativo, GeradorDescricaoOpenAi>(
+    NomesHttpClient.OpenAi, cliente =>
+{
+    cliente.BaseAddress = new Uri(openAi.BaseUrl);
+    cliente.Timeout = TimeSpan.FromSeconds(openAi.TimeoutSegundos);
+});
+
+builder.Services.AddHttpClient<IGeradorNomeProduto, GeradorDescricaoOpenAi>(
+    NomesHttpClient.OpenAi, cliente =>
+{
+    cliente.BaseAddress = new Uri(openAi.BaseUrl);
+    cliente.Timeout = TimeSpan.FromSeconds(openAi.TimeoutSegundos);
+});
+
+builder.Services.AddHttpClient<IGeradorSkuProduto, GeradorDescricaoOpenAi>(
+    NomesHttpClient.OpenAi, cliente =>
+{
+    cliente.BaseAddress = new Uri(openAi.BaseUrl);
+    cliente.Timeout = TimeSpan.FromSeconds(openAi.TimeoutSegundos);
 });
 
 #endregion
@@ -301,7 +336,18 @@ app.UseForwardedHeaders();
 // Fica ANTES do UseAuthorization de proposito: a FallbackPolicy exige usuario autenticado, e
 // foto de vitrine tem de abrir para visitante anonimo. Middleware de arquivo estatico e
 // terminal, entao a requisicao de imagem nem chega na autorizacao.
-app.UseStaticFiles();
+//
+// Cache-Control de 1 ano: o nome do arquivo carrega um hash unico por upload (ver
+// ArmazenamentoLocalImagem), entao a mesma URL NUNCA muda de conteudo — reupload gera um nome
+// novo. Sem isso o navegador rebaixava a foto do zero a cada pagina, e cada card/galeria repete
+// a mesma imagem varias vezes na tela.
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+    },
+});
 
 // Swagger publica o mapa completo da API, incluindo as rotas administrativas. Fora de producao.
 if (!app.Environment.IsProduction())

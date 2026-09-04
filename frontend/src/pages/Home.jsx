@@ -5,7 +5,7 @@ import Botao from "@/components/ui/Botao.jsx";
 import Badge from "@/components/ui/Badge.jsx";
 import Skeleton, { SkeletonCard } from "@/components/ui/Skeleton.jsx";
 import CardProduto from "@/components/catalogo/CardProduto.jsx";
-import { useColecoes, useDestaques } from "@/hooks/useCatalogo.js";
+import { useCatalogo, useColecoes, useDestaques } from "@/hooks/useCatalogo.js";
 import { STORE } from "@/data/store.js";
 
 /**
@@ -38,11 +38,20 @@ export default function Home() {
     // A colecao em destaque e a marcada no admin; sem ela, a primeira vigente.
     const colecaoDestaque = colecoes.find((c) => c.destaque) ?? colecoes[0] ?? null;
 
+    // Sem banner de colecao, o hero usa a capa da ULTIMA peca publicada — e o
+    // mesmo criterio do link "Novidades" do menu (ordenacao "Novidade").
+    const precisaUltimaPeca = !colecaoDestaque?.urlMidiaBanner && !colecaoDestaque?.urlMidiaCapa;
+    const { produtos: ultimasPecas } = useCatalogo(
+        { ordenacao: "Novidade" },
+        { pageSize: 1 },
+    );
+    const ultimaPeca = precisaUltimaPeca ? (ultimasPecas[0] ?? null) : null;
+
     return (
         <div className="animate-fade-up">
             {/* ---------------------------------------------------------- HERO */}
             <section className="border-b border-sand bg-linen">
-                <div className="shell grid items-center gap-12 py-16 lg:grid-cols-12 lg:py-24">
+                <div className="shell grid items-center gap-12 py-16 lg:grid-cols-12 lg:items-start lg:py-24">
                     <div className="lg:col-span-6">
                         {carregandoColecoes ? (
                             <Skeleton className="h-3 w-48" />
@@ -63,7 +72,7 @@ export default function Home() {
                         </h1>
 
                         <p className="mt-8 max-w-md text-base leading-relaxed text-ink-soft">
-                            {STORE.manifesto} Peças desenhadas para durar mais de uma estação —
+                            {STORE.manifesto} Peças desenhadas para durar mais de uma estação,
                             e para vestir bem tanto no domingo quanto na terça-feira.
                         </p>
 
@@ -86,9 +95,9 @@ export default function Home() {
                         </div>
                     </div>
 
-                    {/* Bloco de imagem: usa o banner da colecao em destaque quando
-                        existe; sem foto, o proprio degrade da paleta segura a
-                        composicao 3:4. */}
+                    {/* Bloco de imagem: banner da colecao em destaque > capa da ultima peca
+                        publicada > degrade da paleta com a epigrafe (quando o catalogo
+                        ainda esta vazio de verdade). */}
                     <div className="lg:col-span-6">
                         <div className="relative">
                             {colecaoDestaque?.urlMidiaBanner || colecaoDestaque?.urlMidiaCapa ? (
@@ -96,7 +105,7 @@ export default function Home() {
                                     to={`/colecao/${colecaoDestaque.slug}`}
                                     className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-olive focus-visible:ring-offset-4 focus-visible:ring-offset-base-200"
                                 >
-                                    <div className="aspect-product w-full overflow-hidden">
+                                    <div className="aspect-product w-full overflow-hidden lg:aspect-auto lg:h-[520px]">
                                         <img
                                             src={
                                                 colecaoDestaque.urlMidiaBanner ||
@@ -108,9 +117,23 @@ export default function Home() {
                                         />
                                     </div>
                                 </Link>
+                            ) : ultimaPeca ? (
+                                <Link
+                                    to={`/produto/${ultimaPeca.slug}`}
+                                    className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-olive focus-visible:ring-offset-4 focus-visible:ring-offset-base-200"
+                                >
+                                    <div className="aspect-product w-full overflow-hidden lg:aspect-auto lg:h-[520px]">
+                                        <img
+                                            src={ultimaPeca.urlImagemCapa}
+                                            alt={ultimaPeca.altImagemCapa || ultimaPeca.nome}
+                                            loading="eager"
+                                            className="h-full w-full object-cover"
+                                        />
+                                    </div>
+                                </Link>
                             ) : (
                                 <>
-                                    <div className="aspect-product w-full bg-gradient-to-b from-sand via-linen to-bone" />
+                                    <div className="aspect-product w-full bg-gradient-to-b from-sand via-linen to-bone lg:aspect-auto lg:h-[520px]" />
                                     <div className="absolute inset-0 flex flex-col items-center justify-center px-8 text-center">
                                         <span className="font-display text-4xl leading-none text-ink/15">
                                             ✦
@@ -123,7 +146,7 @@ export default function Home() {
                                 </>
                             )}
 
-                            <div className="absolute left-0 top-6 bg-bone px-4 py-2">
+                            <div className="absolute left-4 top-4">
                                 <Badge variante="destaque">Novo</Badge>
                             </div>
                         </div>
@@ -178,7 +201,7 @@ export default function Home() {
                             Nenhuma peça em destaque no momento.
                         </p>
                         <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-ink-soft">
-                            A vitrine completa continua aberta — é lá que está tudo o que dá para
+                            A vitrine completa continua aberta. É lá que está tudo o que dá para
                             levar hoje.
                         </p>
                         <Botao to="/catalogo" variante="contorno" className="mt-6">
@@ -252,7 +275,7 @@ export default function Home() {
                 <div className="shell py-20 text-center">
                     <p className="eyebrow">O propósito</p>
                     <p className="mx-auto mt-6 max-w-2xl font-display text-2xl italic leading-snug text-ink">
-                        Vestir com dignidade é um gesto de fé — e não precisa de estampa
+                        Vestir com dignidade é um gesto de fé, e não precisa de estampa
                         para ser dito.
                     </p>
                     <div className="mt-10 flex justify-center">

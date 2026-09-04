@@ -7,9 +7,7 @@ export default function Footer() {
         <footer className="mt-24 border-t border-sand bg-linen">
             <div className="shell grid gap-10 py-16 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="lg:col-span-2 lg:max-w-sm">
-                    <p className="font-display text-2xl tracking-tight text-ink">
-                        glorific<span className="text-brass">.art</span>
-                    </p>
+                    <img src="/logo-glorific.png" alt="glorific.art" className="h-8 w-auto" />
                     <p className="mt-4 text-sm leading-relaxed text-ink-soft">
                         {STORE.manifesto}
                     </p>

@@ -1,8 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
+const TAMANHO_LUPA = 170;
+const FATOR_ZOOM = 2.4;
+
 /**
- * Galeria da pagina de produto: foto grande 3:4 + miniaturas.
+ * Galeria da pagina de produto: foto grande 3:4 + miniaturas + lupa no hover
+ * (desktop: um quadrado que segue o cursor e mostra a area sob ele ampliada).
  *
  * As `midias` ja chegam filtradas pela cor escolhida (a page resolve o grupo em
  * `produto.galeria`). Quando a lista troca, a foto volta para a primeira — sem
@@ -10,12 +14,15 @@ import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
  */
 export default function GaleriaProduto({ midias = [], nome = "" }) {
     const [indice, setIndice] = useState(0);
+    const [lupa, setLupa] = useState(null); // { left, top, bgSize, bgPosX, bgPosY } | null
+    const imagemRef = useRef(null);
 
     // Identidade da lista: a primeira foto + o tamanho bastam para detectar troca.
     const assinatura = `${midias[0]?.id ?? "vazio"}-${midias.length}`;
 
     useEffect(() => {
         setIndice(0);
+        setLupa(null);
     }, [assinatura]);
 
     if (!midias.length) {
@@ -36,11 +43,43 @@ export default function GaleriaProduto({ midias = [], nome = "" }) {
         setIndice(((proximo % total) + total) % total);
     };
 
+    // A lupa so faz sentido em tela com mouse de verdade — em telas menores que
+    // o breakpoint lg o hover nao existe, entao nem calculamos.
+    const moverLupa = (evento) => {
+        const box = imagemRef.current?.getBoundingClientRect();
+        if (!box) return;
+
+        const cursorX = Math.min(box.width, Math.max(0, evento.clientX - box.left));
+        const cursorY = Math.min(box.height, Math.max(0, evento.clientY - box.top));
+
+        const left = Math.min(
+            Math.max(0, cursorX - TAMANHO_LUPA / 2),
+            box.width - TAMANHO_LUPA,
+        );
+        const top = Math.min(
+            Math.max(0, cursorY - TAMANHO_LUPA / 2),
+            box.height - TAMANHO_LUPA,
+        );
+
+        setLupa({
+            left,
+            top,
+            bgSize: `${box.width * FATOR_ZOOM}px ${box.height * FATOR_ZOOM}px`,
+            bgPosX: `${-left * FATOR_ZOOM}px`,
+            bgPosY: `${-top * FATOR_ZOOM}px`,
+        });
+    };
+
     return (
         <div className="flex flex-col gap-4 lg:flex-row-reverse lg:items-start lg:gap-6">
             {/* -------------------------------------------------- FOTO PRINCIPAL */}
-            <div className="relative w-full bg-linen lg:flex-1">
-                <div className="aspect-product w-full">
+            <div
+                ref={imagemRef}
+                onMouseMove={moverLupa}
+                onMouseLeave={() => setLupa(null)}
+                className="relative w-full bg-linen lg:flex-1 lg:h-[min(58vh,480px)] lg:cursor-zoom-in"
+            >
+                <div className="aspect-product w-full lg:h-full lg:w-auto lg:max-w-full lg:mx-auto">
                     <img
                         src={atual.url}
                         alt={atual.altText || nome}
@@ -49,6 +88,25 @@ export default function GaleriaProduto({ midias = [], nome = "" }) {
                         className="h-full w-full object-cover"
                     />
                 </div>
+
+                {/* Lupa: quadrado que segue o cursor e mostra a mesma foto ampliada,
+                    recortada exatamente na area sob o cursor. */}
+                {lupa && (
+                    <div
+                        aria-hidden="true"
+                        className="pointer-events-none absolute hidden border-2 border-base-100 shadow-lg lg:block"
+                        style={{
+                            left: lupa.left,
+                            top: lupa.top,
+                            width: TAMANHO_LUPA,
+                            height: TAMANHO_LUPA,
+                            backgroundImage: `url(${atual.url})`,
+                            backgroundRepeat: "no-repeat",
+                            backgroundSize: lupa.bgSize,
+                            backgroundPosition: `${lupa.bgPosX} ${lupa.bgPosY}`,
+                        }}
+                    />
+                )}
 
                 {temVarias && (
                     <>

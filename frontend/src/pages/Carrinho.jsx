@@ -92,7 +92,7 @@ export default function Carrinho() {
                     Não conseguimos abrir seu carrinho
                 </h1>
                 <p className="mt-4 max-w-md text-base leading-relaxed text-ink-soft">
-                    A conexão com a loja falhou. Suas peças continuam guardadas — tente de novo em
+                    A conexão com a loja falhou. Suas peças continuam guardadas, tente de novo em
                     instantes.
                 </p>
                 <Botao className="mt-10" onClick={() => recarregar()}>

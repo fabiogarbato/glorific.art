@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { FiX } from "react-icons/fi";
 import { useDialog } from "@/hooks/useDialog.js";
 
@@ -26,7 +27,7 @@ export default function Modal({
 
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-overlay flex items-end justify-center bg-ink/40 p-0 sm:items-center sm:p-6">
             <button
                 type="button"
@@ -40,9 +41,9 @@ export default function Modal({
                 ref={panelRef}
                 {...dialogProps}
                 aria-label={typeof titulo === "string" ? titulo : "Janela"}
-                className={`relative w-full ${LARGURAS[largura] ?? LARGURAS.md} max-h-[90vh] overflow-y-auto border border-sand bg-base-100 shadow-[0_18px_60px_-24px_rgba(28,26,23,0.45)]`}
+                className={`relative flex w-full ${LARGURAS[largura] ?? LARGURAS.md} max-h-[90vh] flex-col border border-sand bg-base-100 shadow-[0_18px_60px_-24px_rgba(28,26,23,0.45)]`}
             >
-                <header className="flex items-start justify-between gap-4 border-b border-sand px-6 py-4">
+                <header className="flex shrink-0 items-start justify-between gap-4 border-b border-sand px-6 py-4">
                     <h2 className="font-display text-xl tracking-tight text-ink">{titulo}</h2>
                     <button
                         type="button"
@@ -54,14 +55,18 @@ export default function Modal({
                     </button>
                 </header>
 
-                <div className="px-6 py-5 text-base text-ink-soft">{children}</div>
+                {/* So o corpo rola. Cabecalho e rodape ficam fixos no lugar deles —
+                    e por isso que da pra sempre ver o titulo e os botoes de acao,
+                    mesmo num formulario comprido como o de colecao. */}
+                <div className="overflow-y-auto px-6 py-5 text-base text-ink-soft">{children}</div>
 
                 {rodape && (
-                    <footer className="flex flex-wrap justify-end gap-3 border-t border-sand bg-linen px-6 py-4">
+                    <footer className="flex shrink-0 flex-wrap justify-end gap-3 border-t border-sand bg-linen px-6 py-4">
                         {rodape}
                     </footer>
                 )}
             </div>
-        </div>
+        </div>,
+        document.body,
     );
 }

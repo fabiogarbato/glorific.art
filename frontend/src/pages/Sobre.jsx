@@ -10,7 +10,7 @@ import { STORE } from "@/data/store.js";
  * marketing, nao o cadastro. Nao ha endpoint por tras desta tela.
  *
  * Regra de honestidade aplicada a copy: nada aqui afirma fato verificavel que a
- * loja nao nos deu — sem fundadora, sem cidade, sem ano de fundacao, sem numero
+ * loja nao nos deu — sem fundador, sem cidade, sem ano de fundacao, sem numero
  * de clientes. Todo texto fala de criterio e de metodo, que e o que a marca de
  * fato controla. Se um dia esses dados existirem, entram aqui com nome e data.
  *
@@ -20,18 +20,18 @@ import { STORE } from "@/data/store.js";
 const PILARES = [
     {
         indice: "01",
-        titulo: "Tecido",
-        texto: "Fibra natural sempre que a peça permite: linho, algodão e viscose de origem responsável. O tecido é escolhido pelo caimento depois de lavado, não pelo brilho na arara.",
+        titulo: "Estampa",
+        texto: "Cada peça carrega uma ideia, não um clichê. A arte nasce da Palavra e vira gráfico de rua, nunca versículo por versículo sem propósito visual.",
     },
     {
         indice: "02",
         titulo: "Modelagem",
-        texto: "Cobertura sem volume. Comprimento, cava e ombro são medidos no corpo em movimento — sentada, de braço erguido, com criança no colo — antes de virarem grade de tamanho.",
+        texto: "Oversized de verdade: ombro caído, comprimento generoso, caimento que sobra sem parecer emprestado. Feita pra usar largada, do jeito que o streetwear pede.",
     },
     {
         indice: "03",
         titulo: "Produção",
-        texto: "Lote curto e costura nacional. Uma peça só volta a ser produzida quando merece voltar, e é por isso que a coleção não cresce todo mês.",
+        texto: "Lote curto e algodão pesado. Uma estampa só volta a ser produzida quando merece voltar. A coleção não cresce toda semana só pra ter novidade.",
     },
 ];
 
@@ -44,11 +44,9 @@ export default function Sobre() {
                     <div className="lg:col-span-5">
                         <p className="eyebrow">Sobre a marca</p>
                         <h1 className="mt-6 font-display text-3xl leading-[1.05] tracking-tight text-ink sm:text-4xl">
-                            Roupa que
+                            A arte de
                             <br />
-                            <em className="font-normal italic text-olive">acompanha</em>
-                            <br />
-                            a vida inteira.
+                            <em className="font-normal italic text-olive">glorificar.</em>
                         </h1>
                     </div>
 
@@ -59,15 +57,24 @@ export default function Sobre() {
 
                         <div className="mt-8 max-w-xl space-y-5 text-base leading-relaxed text-ink-soft">
                             <p>
-                                A glorific.art nasceu de um incômodo simples: quem procura uma
-                                roupa mais coberta costuma ter que escolher entre parecer
-                                fantasiada e parecer desleixada. Nenhuma das duas coisas tem a
-                                ver com fé.
+                                Antes de virar coleção, a Glorific foi um propósito: glorificar
+                                a Ele. A gente ama a Deus, e quis que isso aparecesse em roupa
+                                antes de aparecer em discurso. Anunciar Cristo não seria só
+                                palavra: seria corte, tecido, prazo cumprido, estampa que
+                                aguenta o uso do dia a dia. Pregando sem abrir a boca, do jeito
+                                que a roupa sozinha consegue.
                             </p>
                             <p>
-                                Nossa resposta é sóbria. Cor fechada, corte limpo, acabamento
-                                que aguenta o uso de segunda a segunda. A peça não anuncia nada
-                                por você — ela só não atrapalha o que você tem para dizer.
+                                A Glorific nasceu de um incômodo simples: fé e estética de rua
+                                quase nunca dividem o mesmo cabide. De um lado, a camiseta
+                                gospel de estampa apressada. Do outro, o streetwear que não
+                                tem nada pra dizer. A gente não quis escolher.
+                            </p>
+                            <p>
+                                Cada peça é oversized, pesada, feita pra durar, e carrega uma
+                                estampa que é, ao mesmo tempo, arte de rua e confissão de fé.
+                                Glorificar não é um tema estampado na frente. É o cuidado com
+                                o traço, com o tecido e com quem vai vestir isso todo dia.
                             </p>
                         </div>
                     </div>
@@ -102,29 +109,29 @@ export default function Sobre() {
                     <div className="lg:col-span-4">
                         <p className="eyebrow">O propósito</p>
                         <p className="mt-6 font-display text-2xl italic leading-snug text-ink">
-                            O sagrado aparece pela sobriedade, não pela estampa.
+                            O sagrado aparece pela estampa, não pela sobriedade.
                         </p>
                     </div>
 
                     <div className="lg:col-span-8">
                         <div className="max-w-2xl space-y-5 text-base leading-relaxed text-ink-soft">
                             <p>
-                                Moda cristã, para nós, não é um tema impresso na frente da
-                                camiseta. É o cuidado com quem faz, com o que se compra e com o
-                                tempo que a peça vai durar no armário. Comprar menos e usar por
-                                mais tempo também é uma forma de respeito.
+                                Moda cristã, pra nós, não é evitar chamar atenção. É chamar
+                                atenção pro que importa. Uma camiseta que alguém pergunta "onde
+                                você comprou" é uma porta aberta pra falar de fé sem precisar
+                                dizer uma palavra antes.
                             </p>
                             <p>
-                                Por isso preferimos a coleção curta ao lançamento semanal, e
-                                preferimos dizer que uma peça acabou a repor às pressas com um
-                                tecido pior. Quando escrevemos o guia de medidas com detalhe, é
-                                pelo mesmo motivo: a roupa que serve na primeira tentativa é a
-                                que menos volta pelo correio e a que mais tempo fica com você.
+                                Por isso preferimos a coleção curta ao lançamento toda semana,
+                                e preferimos dizer que uma estampa esgotou a repor às pressas
+                                com um algodão fino. Oversized não é só estética: é a peça
+                                sobrando no corpo pra caber o resto: o testemunho, o incômodo
+                                bom, a pergunta que alguém vai fazer no elevador.
                             </p>
                             <p>
                                 Não prometemos perfeição. Prometemos ficha técnica honesta,
-                                medida conferida na régua e uma resposta de gente quando algo
-                                sair errado.
+                                estampa que não racha na segunda lavagem e uma resposta de
+                                gente quando algo sair errado.
                             </p>
                         </div>
                     </div>
@@ -138,7 +145,7 @@ export default function Sobre() {
                         Comece pela vitrine
                     </h2>
                     <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-ink-soft">
-                        É lá que está tudo o que dá para levar hoje — com a medida de cada
+                        É lá que está tudo o que dá para levar hoje, com a medida de cada
                         tamanho aberta antes da compra.
                     </p>
 

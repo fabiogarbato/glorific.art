@@ -17,4 +17,7 @@ public static class NomesHttpClient
 
     /// <summary>Consulta publica de CEP.</summary>
     public const string ViaCep = "via-cep";
+
+    /// <summary>Geracao de descricao de produto com IA (visao + texto).</summary>
+    public const string OpenAi = "open-ai";
 }

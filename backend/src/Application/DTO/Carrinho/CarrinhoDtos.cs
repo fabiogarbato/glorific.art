@@ -41,6 +41,12 @@ public sealed record CarrinhoItemResponseDto : ResponseDto
 
     public string? CorHexRgb { get; init; }
 
+    /// <summary>
+    /// Foto da peca NA COR desta linha, com fallback pra capa geral do produto. Null quando o
+    /// produto ainda nao tem nenhuma midia — o front cai pra amostra de cor (CorHexRgb).
+    /// </summary>
+    public string? ImagemUrl { get; init; }
+
     public int Quantidade { get; init; }
 
     /// <summary>Preco no instante em que o item entrou no carrinho.</summary>

@@ -154,7 +154,7 @@ export default function Produto() {
                     Esta peça saiu de catálogo.
                 </h1>
                 <p className="mt-5 max-w-md text-base leading-relaxed text-ink-soft">
-                    O endereço não existe mais — ou a peça foi despublicada. Veja o que está no
+                    O endereço não existe mais, ou a peça foi despublicada. Veja o que está no
                     ar agora.
                 </p>
                 <Botao to="/catalogo" className="mt-10">

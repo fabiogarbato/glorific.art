@@ -98,6 +98,7 @@ public sealed class CarrinhoRepository : BaseRepository<CarrinhoEntity>, ICarrin
             .IgnoreQueryFilters()
             .Include(c => c.Cupom)
             .Include(c => c.Itens).ThenInclude(i => i.Variacao).ThenInclude(v => v.Produto)
+                .ThenInclude(p => p.Midias).ThenInclude(m => m.Midia)
             .Include(c => c.Itens).ThenInclude(i => i.Variacao).ThenInclude(v => v.Tamanho)
             .Include(c => c.Itens).ThenInclude(i => i.Variacao).ThenInclude(v => v.Cor)
             .Include(c => c.Itens).ThenInclude(i => i.Variacao).ThenInclude(v => v.Estoque);

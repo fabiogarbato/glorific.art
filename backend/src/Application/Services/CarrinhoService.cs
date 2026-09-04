@@ -645,6 +645,7 @@ public class CarrinhoService : ICarrinhoService
             Tamanho = variacao?.Tamanho?.Codigo,
             Cor = variacao?.Cor?.Nome,
             CorHexRgb = variacao?.Cor?.HexRgb,
+            ImagemUrl = ResolverImagem(variacao),
             Quantidade = item.Quantidade,
             PrecoUnitarioSnapshotCentavos = item.PrecoUnitarioSnapshotCentavos,
             PrecoUnitarioAtualCentavos = precoAtual,
@@ -658,6 +659,31 @@ public class CarrinhoService : ICarrinhoService
             QuantidadeAcimaDoDisponivel = ativo && disponivel > 0 && item.Quantidade > disponivel,
             PesoGramas = variacao?.PesoGramas ?? 0
         };
+    }
+
+    /// <summary>
+    /// Primeiro tenta a capa NA COR da variacao (mesmo criterio da vitrine: cor troca a foto).
+    /// Sem foto pra essa cor, cai pra capa geral do produto; sem capa nenhuma, a primeira foto
+    /// por ordem. Sem nenhuma midia cadastrada, devolve null — o front usa a amostra de cor.
+    /// </summary>
+    private static string? ResolverImagem(ProdutoVariacao? variacao)
+    {
+        var midias = variacao?.Produto?.Midias;
+        if (midias is null || midias.Count == 0)
+            return null;
+
+        var daCor = midias
+            .Where(m => m.IdCor == variacao!.IdCor)
+            .OrderByDescending(m => m.EhCapa)
+            .ThenBy(m => m.Ordem)
+            .FirstOrDefault();
+
+        var capaGeral = midias
+            .OrderByDescending(m => m.EhCapa)
+            .ThenBy(m => m.Ordem)
+            .FirstOrDefault();
+
+        return (daCor ?? capaGeral)?.Midia?.Url;
     }
 
     // ------------------------------------------------------------------

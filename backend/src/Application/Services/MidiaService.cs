@@ -115,7 +115,10 @@ public class MidiaService
             Largura = armazenada.Largura > 0 ? armazenada.Largura : null,
             Altura = armazenada.Altura > 0 ? armazenada.Altura : null,
             TamanhoBytes = armazenada.TamanhoBytes ?? tamanhoBytes,
-            ContentType = contentType,
+            // O storage pode ter reprocessado a imagem (ex.: PNG de foto vira JPEG bem mais
+            // leve) — o content-type gravado tem que ser o do arquivo que ficou no disco, nao
+            // o que o cliente enviou na requisicao.
+            ContentType = armazenada.ContentType ?? contentType,
             DataCriacao = _relogio.UtcNow
         };
 

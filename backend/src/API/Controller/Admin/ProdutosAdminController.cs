@@ -28,15 +28,18 @@ public sealed class ProdutosAdminController : ControllerBase
     private readonly IProdutoService _produtos;
     private readonly IProdutoVariacaoService _variacoes;
     private readonly IMidiaService _midias;
+    private readonly IDescricaoIaService _descricaoIa;
 
     public ProdutosAdminController(
         IProdutoService produtos,
         IProdutoVariacaoService variacoes,
-        IMidiaService midias)
+        IMidiaService midias,
+        IDescricaoIaService descricaoIa)
     {
         _produtos = produtos;
         _variacoes = variacoes;
         _midias = midias;
+        _descricaoIa = descricaoIa;
     }
 
     // ------------------------------------------------------------------
@@ -239,6 +242,59 @@ public sealed class ProdutosAdminController : ControllerBase
     {
         await _midias.DesvincularDoProdutoAsync(id, idMidia, cancellationToken);
         return NoContent();
+    }
+
+    // ------------------------------------------------------------------
+    // Descricao por IA
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    /// Sugestao de descricao gerada por IA a partir da foto de capa da peca e de descricoes de
+    /// outras pecas ativas (referencia de tom). NAO salva nada — o admin revisa o texto e so
+    /// entao grava pelo PUT normal do produto.
+    /// </summary>
+    [HttpPost("{id:int}/gerar-descricao")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<DescricaoGeradaDto>> GerarDescricao(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var descricao = await _descricaoIa.GerarSugestaoAsync(id, cancellationToken);
+        return Ok(new DescricaoGeradaDto { Descricao = descricao });
+    }
+
+    /// <summary>
+    /// Sugestao de NOME gerada por IA a partir da foto de capa da peca e de nomes de outras
+    /// pecas ativas (referencia de formato). NAO salva nada.
+    /// </summary>
+    [HttpPost("{id:int}/gerar-nome")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<DescricaoGeradaDto>> GerarNome(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var nome = await _descricaoIa.GerarNomeSugestaoAsync(id, cancellationToken);
+        return Ok(new DescricaoGeradaDto { Descricao = nome });
+    }
+
+    /// <summary>
+    /// Sugestao de SKU BASE gerada por IA, seguindo o padrao de codigo ja usado em outras pecas
+    /// ativas. NAO salva nada.
+    /// </summary>
+    [HttpPost("{id:int}/gerar-sku")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<DescricaoGeradaDto>> GerarSku(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var sku = await _descricaoIa.GerarSkuSugestaoAsync(id, cancellationToken);
+        return Ok(new DescricaoGeradaDto { Descricao = sku });
     }
 
     /// <summary>

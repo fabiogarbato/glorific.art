@@ -23,6 +23,33 @@
     --danger: #9b4a3c;
 
     --shell: 1440px;
+
+    /*
+     * Trincas RGB (sem "rgb()") para as classes bone/linen/sand/taupe/ink/ink-soft,
+     * que no tailwind.config.js viram rgb(var(--c-x) / <alpha-value>). Storefront
+     * usa estes valores — os mesmos tons de sempre.
+     */
+    --c-bone: 248 245 240;
+    --c-linen: 241 236 227;
+    --c-sand: 227 219 206;
+    --c-taupe: 185 174 156;
+    --c-ink: 28 26 23;
+    --c-ink-soft: 87 81 74;
+}
+
+/*
+ * Painel administrativo: mais branco, mais neutro, mais "software" — sem
+ * mexer no editorial off-white da loja. Ativado via data-scheme="admin" no
+ * container raiz do LayoutAdmin (o data-theme="glorific-admin" junto reteama
+ * as classes base-100/200/300 do DaisyUI que ainda restam em uso).
+ */
+[data-scheme="admin"] {
+    --c-bone: 255 255 255;
+    --c-linen: 247 248 250;
+    --c-sand: 228 231 235;
+    --c-taupe: 156 163 175;
+    --c-ink: 17 24 39;
+    --c-ink-soft: 75 85 99;
 }
 
 @layer base {

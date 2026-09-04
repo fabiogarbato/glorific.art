@@ -3,9 +3,10 @@ using Glorific.Application.Models.MelhorEnvio;
 namespace Glorific.Application.Ports;
 
 /// <summary>
-/// Porta de saida para o microservico integracaoMelhorEnvio (http://melhorenvio_api:8080,
-/// header X-Api-Key). NAO e a API do Melhor Envio direta: o microservico faz o OAuth, renova o
-/// token sozinho e repassa o corpo cru do ME.
+/// Porta de saida para a API REAL do Melhor Envio (OAuth2 "authorization code"). O adaptador
+/// guarda e renova o token sozinho via IContaMelhorEnvioRepository — nenhum servico de negocio
+/// PRECISA saber disso, mas o fluxo de CONECTAR a conta (autorizar + trocar o code) e iniciado
+/// pelo admin, entao esses dois metodos moram aqui tambem.
 ///
 /// Contrato da fronteira:
 /// - o accountId (MelhorEnvio:ContaId) NAO aparece aqui — e detalhe do adaptador, que o le das
@@ -22,6 +23,21 @@ namespace Glorific.Application.Ports;
 /// </summary>
 public interface IMelhorEnvioClient
 {
+    /// <summary>
+    /// Monta a URL de autorizacao OAuth do Melhor Envio (tela de consentimento). O <paramref
+    /// name="state"/> e responsabilidade de quem chama guardar e conferir no retorno — protecao
+    /// contra CSRF do fluxo OAuth.
+    /// </summary>
+    string ObterUrlAutorizacao(string state);
+
+    /// <summary>
+    /// Troca o "code" do retorno OAuth por access/refresh token E JA PERSISTE em
+    /// ContaMelhorEnvio — o adaptador e o unico lugar que le/escreve essa linha (inclusive nas
+    /// renovacoes automaticas antes de cada chamada de negocio), entao manter a gravacao aqui
+    /// evita duas fontes de verdade para o mesmo token.
+    /// </summary>
+    Task ConectarAsync(string code, CancellationToken ct = default);
+
     /// <summary>
     /// POST /api/shipment/calculate — cotacao.
     ///

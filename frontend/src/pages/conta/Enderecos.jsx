@@ -136,7 +136,7 @@ export default function Enderecos() {
                                     {endereco.destinatario}
                                     <br />
                                     {endereco.logradouro}, {endereco.numero}
-                                    {endereco.complemento ? ` — ${endereco.complemento}` : ""}
+                                    {endereco.complemento ? `, ${endereco.complemento}` : ""}
                                     <br />
                                     {endereco.bairro} · {endereco.cidade}/{endereco.uf}
                                     <br />

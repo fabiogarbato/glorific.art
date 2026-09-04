@@ -10,9 +10,71 @@ import Campo from "@/components/ui/Campo.jsx";
 import Skeleton from "@/components/ui/Skeleton.jsx";
 
 import { useConfiguracao, useSalvarConfiguracao } from "@/hooks/useConfiguracao.js";
+import { useConectarMelhorEnvio, useStatusMelhorEnvio } from "@/hooks/admin/useMelhorEnvioAdmin.js";
+import { useToast } from "@/hooks/useToast.js";
 import { formatCEP, isValidCEP, onlyDigits } from "@/utils/masks.js";
 import { formatarDataHora } from "@/utils/datas.js";
 import { mascaraPrecoCentavos, parseBRLParaCentavos } from "@/utils/financeiro.js";
+
+/**
+ * Status da conexao OAuth com o Melhor Envio + botao de conectar/reconectar. Card proprio,
+ * fora do <form> de baixo: e uma ACAO (redireciona pro Melhor Envio), nao um campo que se
+ * salva junto com o resto das configuracoes.
+ */
+function SecaoMelhorEnvio() {
+    const { status, isLoading } = useStatusMelhorEnvio();
+    const { iniciar } = useConectarMelhorEnvio();
+    const toast = useToast();
+
+    const conectar = async () => {
+        try {
+            const url = await iniciar.mutateAsync();
+            window.location.href = url;
+        } catch {
+            toast.error("Não foi possível iniciar a conexão com o Melhor Envio.");
+        }
+    };
+
+    return (
+        <section className="mb-10 max-w-3xl border border-sand bg-linen/50 p-6">
+            <p className="eyebrow mb-1">Transportadora</p>
+            <h2 className="font-display text-xl tracking-tight text-ink">Melhor Envio</h2>
+
+            {isLoading ? (
+                <Skeleton className="mt-4 h-10 w-full" />
+            ) : status?.conectada ? (
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <p className="text-sm text-ink">Conta conectada.</p>
+                        {status.expiraEmUtc && (
+                            <p className="text-xs text-taupe">
+                                Token válido até {formatarDataHora(status.expiraEmUtc)}
+                                {status.precisaRenovar ? " — renovando na próxima cotação." : "."}
+                            </p>
+                        )}
+                    </div>
+                    <Botao
+                        variante="contorno"
+                        tamanho="sm"
+                        onClick={conectar}
+                        carregando={iniciar.isPending}
+                    >
+                        Reconectar
+                    </Botao>
+                </div>
+            ) : (
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+                    <p className="text-sm text-ink-soft">
+                        Nenhuma conta conectada. As cotações de frete não funcionam até conectar.
+                    </p>
+                    <Botao tamanho="sm" onClick={conectar} carregando={iniciar.isPending}>
+                        Conectar
+                    </Botao>
+                </div>
+            )}
+        </section>
+    );
+}
 
 /**
  * Configuração operacional da loja (policy SomenteAdmin).
@@ -124,6 +186,8 @@ export default function Configuracoes() {
                 titulo="Configurações da loja"
                 descricao="Tudo aqui vale para a loja inteira e passa a valer na próxima cotação de frete, não daqui a alguns minutos."
             />
+
+            <SecaoMelhorEnvio />
 
             {isLoading ? (
                 <div className="flex max-w-3xl flex-col gap-6">

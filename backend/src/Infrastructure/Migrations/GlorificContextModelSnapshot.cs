@@ -1517,6 +1517,54 @@ namespace Glorific.Infrastructure.Migrations
                     b.ToTable("usuarios_roles", (string)null);
                 });
 
+            modelBuilder.Entity("Glorific.Domain.Entities.Integracoes.ContaMelhorEnvio", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AccessToken")
+                        .HasColumnType("text")
+                        .HasColumnName("access_token");
+
+                    b.Property<DateTime?>("AtualizadoEmUtc")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("atualizado_em_utc");
+
+                    b.Property<string>("ContaId")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("conta_id");
+
+                    b.Property<string>("Escopo")
+                        .HasColumnType("text")
+                        .HasColumnName("escopo");
+
+                    b.Property<DateTime?>("ExpiraEmUtc")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("expira_em_utc");
+
+                    b.Property<string>("RefreshToken")
+                        .HasColumnType("text")
+                        .HasColumnName("refresh_token");
+
+                    b.Property<string>("TipoToken")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("tipo_token");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContaId")
+                        .IsUnique();
+
+                    b.ToTable("contas_melhor_envio", (string)null);
+                });
+
             modelBuilder.Entity("Glorific.Domain.Entities.Pedidos.Envio", b =>
                 {
                     b.Property<int>("Id")

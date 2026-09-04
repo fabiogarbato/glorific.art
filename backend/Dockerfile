@@ -22,8 +22,10 @@ ENV ASPNETCORE_URLS=http://+:8080 \
 EXPOSE 8080
 
 # Nao roda como root.
-RUN adduser --disabled-password --gecos "" --uid 5001 glorific
+RUN useradd --no-create-home --uid 5001 glorific
 USER glorific
 
-COPY --from=build /app/publish .
+COPY --from=build --chown=glorific:glorific /app/publish .
+
+RUN mkdir -p /app/wwwroot/media
 ENTRYPOINT ["dotnet", "Glorific.Api.dll"]

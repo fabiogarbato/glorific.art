@@ -10,7 +10,7 @@ export default function NaoEncontrado() {
             </h1>
 
             <p className="mt-6 max-w-md text-base leading-relaxed text-ink-soft">
-                O endereço que você acessou não existe mais — ou nunca existiu. Talvez a peça
+                O endereço que você acessou não existe mais, ou nunca existiu. Talvez a peça
                 que procurava tenha saído de catálogo.
             </p>
 

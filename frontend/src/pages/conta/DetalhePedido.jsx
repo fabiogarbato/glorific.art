@@ -214,7 +214,7 @@ export default function DetalhePedido() {
                                 <br />
                                 {enderecoEntrega.logradouro}, {enderecoEntrega.numero}
                                 {enderecoEntrega.complemento
-                                    ? ` — ${enderecoEntrega.complemento}`
+                                    ? `, ${enderecoEntrega.complemento}`
                                     : ""}
                                 <br />
                                 {enderecoEntrega.bairro} · {enderecoEntrega.cidade}/

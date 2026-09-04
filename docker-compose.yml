@@ -41,14 +41,21 @@ services:
       App__PublicBaseUrl: ${APP_PUBLIC_BASE_URL:-http://localhost:5080}
       App__LojaBaseUrl: ${APP_LOJA_BASE_URL:-http://localhost:5174}
       # DNS interno da rede externa — NUNCA 127.0.0.1:5006 entre containers
-      MelhorEnvio__BaseUrl: ${ME_SERVICE_URL:-http://melhorenvio_api:8080}
-      MelhorEnvio__ApiKey: ${ME_API_KEY}
+      MelhorEnvio__BaseUrl: ${ME_BASE_URL:-https://sandbox.melhorenvio.com.br}
+      MelhorEnvio__ClientId: ${ME_CLIENT_ID}
+      MelhorEnvio__ClientSecret: ${ME_CLIENT_SECRET}
+      MelhorEnvio__RedirectUri: ${ME_REDIRECT_URI:-https://hml.glorific.art/}
       Frete__CepOrigem: ${FRETE_CEP_ORIGEM}
       Frete__Remetente__Nome: ${FRETE_REMETENTE_NOME}
       Frete__Remetente__Documento: ${FRETE_REMETENTE_DOCUMENTO}
       Secrets__MasterKey: ${SECRETS_MASTER_KEY}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_SENHA: ${ADMIN_SENHA}
+      OpenAI__ApiKey: ${OPENAI_API_KEY}
     ports:
       - "127.0.0.1:5080:8080"
+    volumes:
+      - media_uploads:/app/wwwroot/media
     networks:
       - default
       - glorific_me
@@ -70,6 +77,7 @@ services:
 
 volumes:
   pgdata:
+  media_uploads:
 
 networks:
   # Rede dedicada e EXTERNA para falar com o microservico do Melhor Envio.

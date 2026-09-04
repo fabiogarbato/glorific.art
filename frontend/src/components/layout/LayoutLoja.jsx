@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import Header from "./Header.jsx";
 import Footer from "./Footer.jsx";
+import AvisoDesenvolvimento from "./AvisoDesenvolvimento.jsx";
 
 /**
  * Shell da loja. Light-only por decisao de marca — nenhuma classe `dark:` aqui
@@ -18,6 +19,8 @@ export default function LayoutLoja() {
             >
                 Pular para o conteúdo
             </a>
+
+            <AvisoDesenvolvimento />
 
             <Header />
 

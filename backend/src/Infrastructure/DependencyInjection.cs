@@ -65,6 +65,7 @@ public static class DependencyInjection
             .Bind(configuration.GetSection(ArmazenamentoLocalOptions.SectionName));
 
         services.AddScoped<IImageStorage, ArmazenamentoLocalImagem>();
+        services.AddScoped<ILeitorArquivoMidia, LeitorArquivoMidiaLocal>();
 
         return services.AddRepositorios();
     }
@@ -86,6 +87,7 @@ public static class DependencyInjection
         services.AddScoped<ICategoriaRepository, CategoriaRepository>();
         services.AddScoped<IColecaoRepository, ColecaoRepository>();
         services.AddScoped<IConfiguracaoLojaRepository, ConfiguracaoLojaRepository>();
+        services.AddScoped<IContaMelhorEnvioRepository, ContaMelhorEnvioRepository>();
         services.AddScoped<ICorRepository, CorRepository>();
         services.AddScoped<ICupomRepository, CupomRepository>();
         services.AddScoped<IEnderecoRepository, EnderecoRepository>();

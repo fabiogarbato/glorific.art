@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { FiArrowLeft, FiImage, FiGrid, FiSave, FiSliders } from "react-icons/fi";
+import { FiArrowLeft, FiCheck, FiImage, FiGrid, FiSave, FiSliders, FiZap } from "react-icons/fi";
 
 import Badge from "@/components/ui/Badge.jsx";
 import Botao from "@/components/ui/Botao.jsx";
@@ -21,6 +21,7 @@ import { useCoresAtivas } from "@/hooks/admin/useCoresAdmin.js";
 import { useTabelasParaSelecao } from "@/hooks/admin/useTabelasMedidasAdmin.js";
 import { useTamanhosAtivos } from "@/hooks/admin/useTamanhosAdmin.js";
 import { useMutacoesMidia } from "@/hooks/admin/useMidiasAdmin.js";
+import { produtosAdminService } from "@/services/admin/produtosAdminService.js";
 import {
     useGaleriaProduto,
     useMutacoesGaleria,
@@ -159,10 +160,12 @@ export default function FormProduto() {
 
     const [aba, setAba] = useState(ABAS.DADOS);
     const [form, setForm] = useState(FORM_VAZIO);
+    const [baseline, setBaseline] = useState(FORM_VAZIO);
     const [erros, setErros] = useState({});
     const [incluirInativas, setIncluirInativas] = useState(false);
     const [confirmar, setConfirmar] = useState(null);
     const [salvandoVariacao, setSalvandoVariacao] = useState(null);
+    const [salvoAgora, setSalvoAgora] = useState(false);
 
     const { produto, isLoading, isError } = useProdutoAdmin(idProduto);
     const { opcoes: categorias } = useArvoreCategorias(false);
@@ -174,7 +177,7 @@ export default function FormProduto() {
     const { criar, atualizar } = useMutacoesProduto();
     const variacoesMut = useMutacoesVariacao(idProduto);
     const galeriaMut = useMutacoesGaleria(idProduto);
-    const { enviar: enviarMidia } = useMutacoesMidia();
+    const { enviar: enviarMidia, atualizarAltText: atualizarAltTextMidia } = useMutacoesMidia();
 
     const { variacoes, isLoading: carregandoVariacoes } = useVariacoesProduto(
         idProduto,
@@ -183,8 +186,34 @@ export default function FormProduto() {
     const { galeria, isLoading: carregandoGaleria } = useGaleriaProduto(idProduto);
 
     useEffect(() => {
-        if (produto) setForm(produtoParaForm(produto));
+        if (produto) {
+            const carregado = produtoParaForm(produto);
+            setForm(carregado);
+            setBaseline(carregado);
+        }
     }, [produto]);
+
+    // Compara com o ultimo estado salvo/carregado — nao com FORM_VAZIO — pra saber se ha
+    // alteracao pendente de salvar. Usado no aviso ao sair e no beforeunload abaixo.
+    const sujo = useMemo(() => JSON.stringify(form) !== JSON.stringify(baseline), [form, baseline]);
+
+    useEffect(() => {
+        if (!sujo) return;
+        const avisar = (evento) => {
+            evento.preventDefault();
+            evento.returnValue = "";
+        };
+        window.addEventListener("beforeunload", avisar);
+        return () => window.removeEventListener("beforeunload", avisar);
+    }, [sujo]);
+
+    const tentarSair = (caminho) => {
+        if (sujo) {
+            setConfirmar({ tipo: "sairSemSalvar", caminho });
+        } else {
+            navegar(caminho);
+        }
+    };
 
     const setCampo = (campo, valor) => setForm((atual) => ({ ...atual, [campo]: valor }));
 
@@ -221,6 +250,9 @@ export default function FormProduto() {
                 await atualizar.mutateAsync({ id: idProduto, payload });
                 toast.success("Dados da peça salvos.");
             }
+            setBaseline(form);
+            setSalvoAgora(true);
+            setTimeout(() => setSalvoAgora(false), 2200);
         } catch {
             // Erro de API já virou toast no interceptor. O formulário permanece
             // preenchido para o operador corrigir e reenviar.
@@ -262,18 +294,94 @@ export default function FormProduto() {
 
     // ----------------------------------------------------------- Galeria
 
-    const enviarFoto = async ({ arquivo, altText, idCor }) => {
+    // Lote: varios arquivos arrastados de uma vez precisam de posicao (ordem) e
+    // capa calculadas com um contador LOCAL, nao com `galeria.length` do estado —
+    // esse valor so atualiza depois que a query refaz o fetch, entao dois envios
+    // em sequencia rapida veriam o mesmo "galeria.length" e brigariam pela mesma
+    // posicao (e pela capa). Cada arquivo espera o anterior terminar de verdade.
+    const enviarLote = async (arquivos, { idCor }) => {
+        const jaTinhaFoto = galeria.length > 0;
+        let ordemAtual = galeria.length;
+        let sucesso = 0;
+
+        for (const arquivo of arquivos) {
+            try {
+                const midia = await enviarMidia.mutateAsync({ arquivo, altText: "" });
+                await galeriaMut.vincular.mutateAsync({
+                    idMidia: midia.id,
+                    idCor,
+                    ordem: ordemAtual,
+                    ehCapa: !jaTinhaFoto && ordemAtual === 0,
+                });
+                ordemAtual += 1;
+                sucesso += 1;
+            } catch {
+                /* toast de erro ja emitido pelo interceptor — segue pro proximo arquivo */
+            }
+        }
+
+        if (sucesso > 0) {
+            toast.success(
+                sucesso === 1 ? "Imagem enviada para a galeria." : `${sucesso} imagens enviadas para a galeria.`,
+            );
+        }
+    };
+
+    const atualizarAltTextFoto = async ({ idMidia, altText }) => {
         try {
-            const midia = await enviarMidia.mutateAsync({ arquivo, altText });
-            await galeriaMut.vincular.mutateAsync({
-                idMidia: midia.id,
-                idCor,
-                ordem: galeria.length,
-                ehCapa: galeria.length === 0, // a primeira foto da peça já nasce capa
-            });
-            toast.success("Imagem enviada para a galeria.");
+            await atualizarAltTextMidia.mutateAsync({ id: idMidia, altText });
         } catch {
-            /* toast de erro já emitido pelo interceptor */
+            /* toast de erro ja emitido pelo interceptor */
+        }
+    };
+
+    // ----------------------------------------------------- Descricao com IA
+
+    const [gerandoDescricao, setGerandoDescricao] = useState(false);
+
+    const gerarDescricaoComIa = async () => {
+        if (!idProduto) return;
+        setGerandoDescricao(true);
+        try {
+            const sugestao = await produtosAdminService.gerarDescricao(idProduto);
+            setCampo(CAMPO.descricao, sugestao);
+            toast.success("Descrição gerada — revise antes de salvar.");
+        } catch {
+            /* toast de erro ja emitido pelo interceptor */
+        } finally {
+            setGerandoDescricao(false);
+        }
+    };
+
+    const [gerandoNome, setGerandoNome] = useState(false);
+
+    const gerarNomeComIa = async () => {
+        if (!idProduto) return;
+        setGerandoNome(true);
+        try {
+            const sugestao = await produtosAdminService.gerarNome(idProduto);
+            setCampo("nome", sugestao);
+            toast.success("Nome gerado — revise antes de salvar.");
+        } catch {
+            /* toast de erro ja emitido pelo interceptor */
+        } finally {
+            setGerandoNome(false);
+        }
+    };
+
+    const [gerandoSku, setGerandoSku] = useState(false);
+
+    const gerarSkuComIa = async () => {
+        if (!idProduto) return;
+        setGerandoSku(true);
+        try {
+            const sugestao = await produtosAdminService.gerarSku(idProduto);
+            setCampo("skuBase", sugestao);
+            toast.success("SKU gerado — revise antes de salvar.");
+        } catch {
+            /* toast de erro ja emitido pelo interceptor */
+        } finally {
+            setGerandoSku(false);
         }
     };
 
@@ -291,6 +399,13 @@ export default function FormProduto() {
 
     const confirmarAcao = async () => {
         if (!confirmar) return;
+
+        if (confirmar.tipo === "sairSemSalvar") {
+            const caminho = confirmar.caminho;
+            setConfirmar(null);
+            navegar(caminho);
+            return;
+        }
 
         try {
             if (confirmar.tipo === "removerFoto") {
@@ -311,6 +426,15 @@ export default function FormProduto() {
 
     const textoConfirmacao = useMemo(() => {
         if (!confirmar) return {};
+        if (confirmar.tipo === "sairSemSalvar") {
+            return {
+                titulo: "Sair sem salvar",
+                mensagem:
+                    "Esta peça tem alterações que ainda não foram salvas. Se sair agora, elas se perdem.",
+                textoConfirmar: "Sair sem salvar",
+                variante: "perigo",
+            };
+        }
         if (confirmar.tipo === "removerFoto") {
             return {
                 titulo: "Remover a imagem da galeria",
@@ -387,13 +511,14 @@ export default function FormProduto() {
 
     return (
         <div className="animate-fade-up">
-            <Link
-                to="/admin/produtos"
+            <button
+                type="button"
+                onClick={() => tentarSair("/admin/produtos")}
                 className="mb-6 inline-flex items-center gap-2 font-sans text-xs uppercase tracking-widest text-ink-soft transition-colors hover:text-ink"
             >
                 <FiArrowLeft size={14} aria-hidden="true" />
                 Todas as peças
-            </Link>
+            </button>
 
             <CabecalhoPagina
                 sobrancelha="Catálogo"
@@ -465,25 +590,77 @@ export default function FormProduto() {
                         </legend>
 
                         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                            <Campo
-                                label="Nome da peça"
-                                obrigatorio
-                                value={form.nome}
-                                erro={erros.nome}
-                                maxLength={LIMITES.produtoNome}
-                                placeholder="Vestido Midi Linho"
-                                onChange={(e) => setCampo("nome", e.target.value)}
-                            />
-                            <Campo
-                                label="SKU base"
-                                obrigatorio
-                                value={form.skuBase}
-                                erro={erros.skuBase}
-                                maxLength={LIMITES.produtoSkuBase}
-                                placeholder="VST-MIDI-LIN"
-                                ajuda="É o SKU do modelo. O SKU vendável nasce na variação, a partir deste prefixo."
-                                onChange={(e) => setCampo("skuBase", e.target.value)}
-                            />
+                            <div>
+                                <div className="mb-1.5 flex items-center justify-between gap-3">
+                                    <label htmlFor="produto-nome" className="eyebrow">
+                                        Nome da peça
+                                        <span className="ml-1 text-danger">*</span>
+                                    </label>
+                                    {!ehNova && (
+                                        <button
+                                            type="button"
+                                            onClick={gerarNomeComIa}
+                                            disabled={gerandoNome}
+                                            title="Gerar nome com IA, a partir da foto de capa"
+                                            className="flex shrink-0 items-center gap-1.5 font-sans text-xs font-medium text-taupe transition-colors hover:text-olive disabled:opacity-40"
+                                        >
+                                            {gerandoNome ? (
+                                                <span
+                                                    className="loading loading-spinner loading-xs"
+                                                    aria-hidden="true"
+                                                />
+                                            ) : (
+                                                <FiZap size={12} aria-hidden="true" />
+                                            )}
+                                            IA
+                                        </button>
+                                    )}
+                                </div>
+                                <Campo
+                                    id="produto-nome"
+                                    value={form.nome}
+                                    erro={erros.nome}
+                                    maxLength={LIMITES.produtoNome}
+                                    placeholder="Vestido Midi Linho"
+                                    onChange={(e) => setCampo("nome", e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <div className="mb-1.5 flex items-center justify-between gap-3">
+                                    <label htmlFor="produto-sku-base" className="eyebrow">
+                                        SKU base
+                                        <span className="ml-1 text-danger">*</span>
+                                    </label>
+                                    {!ehNova && (
+                                        <button
+                                            type="button"
+                                            onClick={gerarSkuComIa}
+                                            disabled={gerandoSku}
+                                            title="Gerar SKU com IA, seguindo o padrão de outras peças"
+                                            className="flex shrink-0 items-center gap-1.5 font-sans text-xs font-medium text-taupe transition-colors hover:text-olive disabled:opacity-40"
+                                        >
+                                            {gerandoSku ? (
+                                                <span
+                                                    className="loading loading-spinner loading-xs"
+                                                    aria-hidden="true"
+                                                />
+                                            ) : (
+                                                <FiZap size={12} aria-hidden="true" />
+                                            )}
+                                            IA
+                                        </button>
+                                    )}
+                                </div>
+                                <Campo
+                                    id="produto-sku-base"
+                                    value={form.skuBase}
+                                    erro={erros.skuBase}
+                                    maxLength={LIMITES.produtoSkuBase}
+                                    placeholder="VST-MIDI-LIN"
+                                    ajuda="É o SKU do modelo. O SKU vendável nasce na variação, a partir deste prefixo."
+                                    onChange={(e) => setCampo("skuBase", e.target.value)}
+                                />
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -517,14 +694,34 @@ export default function FormProduto() {
                             </Campo>
                         </div>
 
-                        <Campo
-                            label="Descrição"
-                            como="textarea"
-                            rows={5}
-                            value={form.descricao}
-                            placeholder="O caimento, o tecido, a ocasião. Escreva como quem apresenta a peça na loja."
-                            onChange={(e) => setCampo(CAMPO.descricao, e.target.value)}
-                        />
+                        <div className="flex flex-col gap-2">
+                            <Campo
+                                label="Descrição"
+                                como="textarea"
+                                rows={5}
+                                value={form.descricao}
+                                placeholder="O caimento, o tecido, a ocasião. Escreva como quem apresenta a peça na loja."
+                                onChange={(e) => setCampo(CAMPO.descricao, e.target.value)}
+                            />
+                            {!ehNova && (
+                                <div className="flex items-center gap-2">
+                                    <Botao
+                                        type="button"
+                                        variante="sutil"
+                                        tamanho="sm"
+                                        onClick={gerarDescricaoComIa}
+                                        disabled={gerandoDescricao}
+                                        carregando={gerandoDescricao}
+                                    >
+                                        <FiZap size={13} aria-hidden="true" />
+                                        {gerandoDescricao ? "Gerando…" : "Gerar descrição com IA"}
+                                    </Botao>
+                                    <span className="text-xs text-taupe">
+                                        Lê a foto de capa e outras peças da loja como referência.
+                                    </span>
+                                </div>
+                            )}
+                        </div>
                     </fieldset>
 
                     <fieldset className="flex flex-col gap-6 border-t border-sand pt-8">
@@ -698,9 +895,21 @@ export default function FormProduto() {
                     </fieldset>
 
                     <div className="sticky bottom-0 flex flex-wrap items-center justify-end gap-3 border-t border-sand bg-base-100 py-4">
-                        <Botao variante="texto" to="/admin/produtos">
+                        <Botao variante="texto" type="button" onClick={() => tentarSair("/admin/produtos")}>
                             Cancelar
                         </Botao>
+                        {salvoAgora ? (
+                            <span className="flex items-center gap-1.5 font-sans text-xs text-olive">
+                                <FiCheck size={14} aria-hidden="true" />
+                                Salvo
+                            </span>
+                        ) : (
+                            sujo && (
+                                <span className="font-sans text-xs text-taupe">
+                                    Alterações não salvas
+                                </span>
+                            )
+                        )}
                         <Botao type="submit" carregando={salvando} disabled={salvando}>
                             <FiSave size={14} aria-hidden="true" />
                             {ehNova ? "Salvar e continuar" : "Salvar alterações"}
@@ -738,7 +947,8 @@ export default function FormProduto() {
                     cores={cores}
                     carregando={carregandoGaleria}
                     enviando={enviarMidia.isPending || galeriaMut.vincular.isPending}
-                    onEnviar={enviarFoto}
+                    onEnviarLote={enviarLote}
+                    onAtualizarAltText={atualizarAltTextFoto}
                     onRemover={(foto) => setConfirmar({ tipo: "removerFoto", foto })}
                     onReordenar={(ids) => galeriaMut.reordenar.mutate(ids)}
                     onTrocarCor={trocarCorDaFoto}

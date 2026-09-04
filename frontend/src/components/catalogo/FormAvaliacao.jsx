@@ -75,8 +75,8 @@ export default function FormAvaliacao({ idProduto, tamanhos = [] }) {
         return (
             <div className="border border-sand bg-linen p-6">
                 <p className="text-sm leading-relaxed text-ink-soft">
-                    Comprou esta peça? Entre na sua conta para contar como ela veste — é o que
-                    mais ajuda quem está em dúvida entre dois tamanhos.
+                    Comprou esta peça? Entre na sua conta para contar como ela veste.
+                    É o que mais ajuda quem está em dúvida entre dois tamanhos.
                 </p>
                 <Botao to="/login" variante="contorno" tamanho="sm" className="mt-4">
                     Entrar para avaliar

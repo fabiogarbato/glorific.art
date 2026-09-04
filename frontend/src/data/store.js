@@ -2,9 +2,9 @@
 export const STORE = Object.freeze({
     name: "glorific.art",
     legalName: "Glorific Art Comércio de Vestuário Ltda.",
-    tagline: "Moda cristã contemporânea",
+    tagline: "A arte de glorificar",
     manifesto:
-        "Peças de caimento sereno, tecidos naturais e desenho atemporal. O sagrado aparece pela sobriedade.",
+        "Camisetas oversized, streetwear e fé sem meio-termo. Peças de rua com propósito: o sagrado na estampa, não na etiqueta.",
 
     contact: {
         email: "contato@glorific.art",
@@ -19,8 +19,7 @@ export const STORE = Object.freeze({
 
     navegacao: [
         { label: "Novidades", to: "/catalogo?ordem=recentes" },
-        { label: "Vestidos", to: "/categoria/vestidos" },
-        { label: "Alfaiataria", to: "/categoria/alfaiataria" },
+        { label: "Camisetas", to: "/categoria/camisetas" },
         { label: "Coleções", to: "/colecoes" },
         { label: "Sobre", to: "/sobre" },
     ],

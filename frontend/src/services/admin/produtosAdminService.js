@@ -73,6 +73,40 @@ export const produtosAdminService = {
         return normalizarPagina(data);
     },
 
+    /**
+     * POST /api/v1/admin/produtos/{id}/gerar-descricao
+     * Le a foto de capa e descricoes de outras pecas ativas, devolve so o TEXTO sugerido —
+     * nao salva nada. Quem grava e o PUT normal, quando o admin confirmar/editar.
+     */
+    async gerarDescricao(id) {
+        const { data } = await api.post(`${BASE}/${id}/gerar-descricao`, null, {
+            timeout: 70000, // a OpenAI le a imagem e pode passar do timeout padrao (20s)
+        });
+        return data?.descricao ?? '';
+    },
+
+    /**
+     * POST /api/v1/admin/produtos/{id}/gerar-nome
+     * Le a foto de capa e nomes de outras pecas ativas, devolve so o TEXTO sugerido.
+     */
+    async gerarNome(id) {
+        const { data } = await api.post(`${BASE}/${id}/gerar-nome`, null, {
+            timeout: 70000,
+        });
+        return data?.descricao ?? '';
+    },
+
+    /**
+     * POST /api/v1/admin/produtos/{id}/gerar-sku
+     * Segue o padrao de codigo das outras pecas ativas, devolve so o TEXTO sugerido.
+     */
+    async gerarSku(id) {
+        const { data } = await api.post(`${BASE}/${id}/gerar-sku`, null, {
+            timeout: 70000,
+        });
+        return data?.descricao ?? '';
+    },
+
     // ------------------------------------------------------------- Variacoes
 
     // GET /api/v1/admin/produtos/{id}/variacoes?incluirInativas=

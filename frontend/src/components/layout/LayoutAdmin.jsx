@@ -171,8 +171,8 @@ export default function LayoutAdmin() {
     const sidebar = (
         <div className="flex h-full flex-col">
             <div className="flex h-20 items-center justify-between border-b border-sand px-4">
-                <Link to="/admin" className="font-display text-lg tracking-tight text-ink">
-                    glorific<span className="text-brass">.art</span>
+                <Link to="/admin" className="shrink-0">
+                    <img src="/logo-glorific.png" alt="glorific.art" className="h-6 w-auto" />
                 </Link>
                 <span className="eyebrow hidden lg:inline">Painel</span>
                 <button
@@ -254,7 +254,7 @@ export default function LayoutAdmin() {
     );
 
     return (
-        <div className="flex min-h-screen bg-base-100 text-base-content">
+        <div data-scheme="admin" data-theme="glorific-admin" className="flex min-h-screen bg-base-100 text-base-content">
             <aside className="hidden w-64 shrink-0 border-r border-sand bg-base-100 lg:block">
                 <div className="sticky top-0 h-screen">{sidebar}</div>
             </aside>

@@ -4,6 +4,11 @@ using Glorific.Domain.Helpers;
 using Glorific.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.Formats.Png;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 
 namespace Glorific.Infrastructure.Storage;
 
@@ -68,7 +73,29 @@ public sealed class ArmazenamentoLocalImagem : IImageStorage
                 $"A imagem excede o limite de {_opcoes.TamanhoMaximoBytes} bytes.");
 
         var agora = _relogio.UtcNow;
-        var extensao = ExtensaoDe(contentType, nomeArquivo);
+        var contentTypeFinal = contentType;
+
+        // Otimizacao: PNG de foto (sem transparencia real) e ordens de grandeza mais pesado que
+        // o mesmo quadro em JPEG, e foto de produto raramente precisa de mais que ~1800px no
+        // lado maior pra encher a tela. So mexe em JPEG/PNG/WebP — AVIF nao tem decoder nativo
+        // no ImageSharp, e e melhor servir o arquivo original do que quebrar o upload.
+        if (contentType is "image/jpeg" or "image/pjpeg" or "image/png" or "image/webp")
+        {
+            try
+            {
+                (bytes, contentTypeFinal) = OtimizarImagem(bytes, contentType);
+            }
+            catch (Exception excecao) when (excecao is not OutOfMemoryException)
+            {
+                _logger.LogWarning(
+                    excecao,
+                    "Nao foi possivel reprocessar a imagem, gravando o arquivo original. Nome={Nome}",
+                    nomeArquivo);
+                contentTypeFinal = contentType;
+            }
+        }
+
+        var extensao = ExtensaoDe(contentTypeFinal, nomeArquivo);
 
         // Guid puro no nome; o nome original vira apenas um prefixo legivel e ja higienizado
         // pelo SlugHelper, para o admin reconhecer o arquivo no disco.
@@ -111,8 +138,67 @@ public sealed class ArmazenamentoLocalImagem : IImageStorage
             Largura = largura,
             Altura = altura,
             TamanhoBytes = bytes.LongLength,
-            Formato = extensao.TrimStart('.')
+            Formato = extensao.TrimStart('.'),
+            ContentType = contentTypeFinal
         };
+    }
+
+    private const int LadoMaximoPixels = 1800;
+
+    /// <summary>
+    /// Redimensiona (so encolhe, nunca aumenta) e recomprime. PNG sem canal alfa em uso vira
+    /// JPEG — e o caso comum de imagem gerada por IA ou foto de still, que sai do PNG cru pesando
+    /// varias vezes mais que o mesmo quadro em JPEG sem perda visivel nenhuma. PNG com
+    /// transparencia real fica PNG, so recomprimido e redimensionado.
+    /// </summary>
+    private static (byte[] Bytes, string ContentType) OtimizarImagem(byte[] original, string contentTypeOriginal)
+    {
+        using var imagem = Image.Load<Rgba32>(original);
+
+        if (imagem.Width > LadoMaximoPixels || imagem.Height > LadoMaximoPixels)
+        {
+            imagem.Mutate(x => x.Resize(new ResizeOptions
+            {
+                Mode = ResizeMode.Max,
+                Size = new Size(LadoMaximoPixels, LadoMaximoPixels),
+            }));
+        }
+
+        var temTransparencia = contentTypeOriginal == "image/png" && PossuiTransparencia(imagem);
+
+        using var saida = new MemoryStream();
+
+        if (temTransparencia)
+        {
+            imagem.SaveAsPng(saida, new PngEncoder { CompressionLevel = PngCompressionLevel.BestCompression });
+            return (saida.ToArray(), "image/png");
+        }
+
+        imagem.SaveAsJpeg(saida, new JpegEncoder { Quality = 85 });
+        return (saida.ToArray(), "image/jpeg");
+    }
+
+    private static bool PossuiTransparencia(Image<Rgba32> imagem)
+    {
+        var transparente = false;
+
+        imagem.ProcessPixelRows(acesso =>
+        {
+            for (var y = 0; y < acesso.Height && !transparente; y++)
+            {
+                var linha = acesso.GetRowSpan(y);
+                for (var x = 0; x < linha.Length; x++)
+                {
+                    if (linha[x].A < 255)
+                    {
+                        transparente = true;
+                        break;
+                    }
+                }
+            }
+        });
+
+        return transparente;
     }
 
     /// <inheritdoc />

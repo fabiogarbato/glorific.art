@@ -234,7 +234,7 @@ export default function Catalogo({ modo = "vitrine" }) {
                                 A vitrine não carregou.
                             </p>
                             <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-ink-soft">
-                                Pode ter sido a conexão. Tente de novo — se insistir, avise a
+                                Pode ter sido a conexão. Tente de novo. Se insistir, avise a
                                 gente pelo WhatsApp.
                             </p>
                             <Botao variante="contorno" className="mt-6" onClick={() => refetch()}>
@@ -248,7 +248,7 @@ export default function Catalogo({ modo = "vitrine" }) {
                             </p>
                             <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-ink-soft">
                                 {ativos > 0
-                                    ? "Tente soltar um filtro — o tamanho e a faixa de preço costumam ser os mais restritivos."
+                                    ? "Tente soltar um filtro: o tamanho e a faixa de preço costumam ser os mais restritivos."
                                     : filtros.busca
                                       ? "Nada com esse termo. Tente uma palavra mais curta, como “vestido” ou “linho”."
                                       : "Ainda não há peças publicadas aqui. Volte em alguns dias."}

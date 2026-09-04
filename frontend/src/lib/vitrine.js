@@ -116,12 +116,12 @@ export function recomendacaoDeTamanho(caimentoPredominante) {
     switch (caimentoPredominante) {
         case 1:
         case 2:
-            return "A maioria diz que a peça veste menor — considere um número acima.";
+            return "A maioria diz que a peça veste menor. Considere um número acima.";
         case 3:
             return "A maioria diz que a peça veste como esperado.";
         case 4:
         case 5:
-            return "A maioria diz que a peça veste maior — considere um número abaixo.";
+            return "A maioria diz que a peça veste maior. Considere um número abaixo.";
         default:
             return null;
     }

@@ -26,4 +26,11 @@ public sealed record ImagemArmazenadaInfo
     public long? TamanhoBytes { get; init; }
 
     public string? Formato { get; init; }
+
+    /// <summary>
+    /// MIME final do arquivo gravado. Pode divergir do content-type ENVIADO quando o
+    /// armazenamento reprocessa a imagem (ex.: PNG de foto vira JPEG, bem mais leve) — quem
+    /// grava a midia deve usar ESTE valor, nunca o que veio na requisicao.
+    /// </summary>
+    public string? ContentType { get; init; }
 }

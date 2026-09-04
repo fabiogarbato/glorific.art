@@ -138,7 +138,7 @@ export default function PagamentoRetorno() {
                 <p>
                     Recebemos e conferimos o pagamento do pedido{" "}
                     <strong className="font-sans text-ink">{status.numero}</strong>. Agora a peça
-                    entra em separação — avisamos por e-mail a cada passo.
+                    entra em separação. Avisamos por e-mail a cada passo.
                 </p>
             </Painel>
         );
@@ -194,7 +194,7 @@ export default function PagamentoRetorno() {
         >
             <p aria-live="polite">
                 O pedido <strong className="font-sans text-ink">{status.numero}</strong> foi criado
-                e aguarda a confirmação do banco. Isso costuma levar alguns segundos — pode deixar
+                e aguarda a confirmação do banco. Isso costuma levar alguns segundos; pode deixar
                 esta página aberta.
             </p>
 

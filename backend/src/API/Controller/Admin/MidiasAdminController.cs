@@ -29,10 +29,12 @@ public sealed class MidiasAdminController
     private const long TamanhoMaximoRequisicao = 12L * 1024 * 1024;
 
     private readonly IMidiaService _midias;
+    private readonly IDescricaoIaService _descricaoIa;
 
-    public MidiasAdminController(IMidiaService midias) : base(midias)
+    public MidiasAdminController(IMidiaService midias, IDescricaoIaService descricaoIa) : base(midias)
     {
         _midias = midias;
+        _descricaoIa = descricaoIa;
     }
 
     protected override int GetId(MidiaResponseDto dto) => dto.Id;
@@ -63,5 +65,22 @@ public sealed class MidiasAdminController
             cancellationToken);
 
         return CreatedAtAction(nameof(ObterPorId), new { id = midia.Id }, midia);
+    }
+
+    /// <summary>
+    /// Sugestao de texto alternativo gerada por IA a partir da propria imagem e de alt texts de
+    /// outras imagens do acervo (referencia de padrao). NAO salva nada — o admin revisa o texto
+    /// e so entao grava pelo PUT normal da midia (so o altText e editavel).
+    /// </summary>
+    [HttpPost("{id:int}/gerar-texto-alternativo")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<DescricaoGeradaDto>> GerarTextoAlternativo(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var texto = await _descricaoIa.GerarTextoAlternativoAsync(id, cancellationToken);
+        return Ok(new DescricaoGeradaDto { Descricao = texto });
     }
 }

@@ -120,7 +120,7 @@ const POLITICAS = {
                 titulo: "Frete",
                 paragrafos: [
                     FRETE_CORTESIA
-                        ? `O valor do frete é calculado pelo CEP na página do produto e no carrinho, antes de você pagar. Pedidos a partir de ${FRETE_CORTESIA} têm frete cortesia — esse é o valor vigente hoje e pode mudar em campanhas futuras; vale sempre o que estiver na tela no momento da compra.`
+                        ? `O valor do frete é calculado pelo CEP na página do produto e no carrinho, antes de você pagar. Pedidos a partir de ${FRETE_CORTESIA} têm frete cortesia. Esse é o valor vigente hoje e pode mudar em campanhas futuras; vale sempre o que estiver na tela no momento da compra.`
                         : "O valor do frete é calculado pelo CEP na página do produto e no carrinho, antes de você pagar. Vale sempre o valor que estiver na tela no momento da compra.",
                 ],
             },
@@ -193,7 +193,7 @@ const POLITICAS = {
                 titulo: "Os seus direitos",
                 paragrafos: [
                     "A LGPD garante que você peça, a qualquer momento: confirmação de que tratamos dados seus, acesso a esses dados, correção do que estiver errado, anonimização ou eliminação do que for desnecessário, portabilidade, informação sobre com quem compartilhamos e revogação do consentimento.",
-                    `Para exercer qualquer um deles, escreva para ${EMAIL}. Respondemos no menor prazo possível e, no máximo, dentro do prazo legal. Podemos pedir alguma informação a mais só para confirmar que é você mesmo — pedido de dados vindo de outra pessoa é o risco que essa checagem evita.`,
+                    `Para exercer qualquer um deles, escreva para ${EMAIL}. Respondemos no menor prazo possível e, no máximo, dentro do prazo legal. Podemos pedir alguma informação a mais só para confirmar que é você mesmo: pedido de dados vindo de outra pessoa é o risco que essa checagem evita.`,
                 ],
             },
             {
@@ -218,7 +218,7 @@ const POLITICAS = {
             {
                 titulo: "Sua conta",
                 paragrafos: [
-                    "A conta é pessoal e a senha é sua responsabilidade: não compartilhe. Os dados informados no cadastro precisam ser verdadeiros e atualizados — endereço errado atrasa entrega e CPF incorreto impede a emissão da nota fiscal.",
+                    "A conta é pessoal e a senha é sua responsabilidade: não compartilhe. Os dados informados no cadastro precisam ser verdadeiros e atualizados. Endereço errado atrasa entrega, e CPF incorreto impede a emissão da nota fiscal.",
                     "Podemos suspender uma conta usada para fraude, revenda não autorizada, tentativa de invasão ou qualquer uso que prejudique outras pessoas.",
                 ],
             },
@@ -245,7 +245,7 @@ const POLITICAS = {
             {
                 titulo: "Limites e alterações",
                 paragrafos: [
-                    "Fazemos o possível para manter a loja no ar e as informações corretas, mas não prometemos funcionamento sem qualquer interrupção — manutenção e falhas de terceiros acontecem. Nada nestes termos afasta os direitos que o Código de Defesa do Consumidor garante a você.",
+                    "Fazemos o possível para manter a loja no ar e as informações corretas, mas não prometemos funcionamento sem qualquer interrupção: manutenção e falhas de terceiros acontecem. Nada nestes termos afasta os direitos que o Código de Defesa do Consumidor garante a você.",
                     "Estes termos podem ser atualizados. A versão publicada nesta página é a que vale, e a compra fica regida pela versão vigente na data em que foi feita.",
                 ],
             },

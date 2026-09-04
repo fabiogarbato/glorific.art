@@ -306,7 +306,7 @@ export default function Checkout() {
                                                     <span className="mt-1 block text-sm text-ink-soft">
                                                         {endereco.logradouro}, {endereco.numero}
                                                         {endereco.complemento
-                                                            ? ` — ${endereco.complemento}`
+                                                            ? `, ${endereco.complemento}`
                                                             : ""}
                                                         <br />
                                                         {endereco.bairro} · {endereco.cidade}/

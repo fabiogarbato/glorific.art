@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { FiEdit2, FiHardDrive, FiImage, FiTrash2, FiUpload } from "react-icons/fi";
+import { useMemo, useState } from "react";
+import { FiEdit2, FiHardDrive, FiImage, FiTrash2, FiZap } from "react-icons/fi";
 
 import Botao from "@/components/ui/Botao.jsx";
 import Campo from "@/components/ui/Campo.jsx";
 import ConfirmModal from "@/components/ui/ConfirmModal.jsx";
+import Dropzone from "@/components/ui/Dropzone.jsx";
 import Modal from "@/components/ui/Modal.jsx";
 import Paginacao from "@/components/ui/Paginacao.jsx";
 import Skeleton from "@/components/ui/Skeleton.jsx";
@@ -24,6 +25,7 @@ import { LIMITES } from "@/lib/dominioCatalogo.js";
 import {
     FORMATOS_ACEITOS,
     TAMANHO_MAXIMO_BYTES,
+    midiasAdminService,
 } from "@/services/admin/midiasAdminService.js";
 import { formatarDataHora } from "@/utils/datas.js";
 
@@ -34,6 +36,11 @@ import { formatarDataHora } from "@/utils/datas.js";
  * remover uma imagem daqui é diferente de tirá-la da galeria de uma peça. Só o
  * texto alternativo é editável — trocar a URL mudaria a foto de todo produto que
  * a referencia sem deixar rastro; quem quer outra imagem sobe outra imagem.
+ *
+ * O envio é o mesmo Dropzone da galeria de produto: arrastou (ou escolheu no
+ * clique), já sobe — sem botão "Enviar" separado. O texto alternativo é
+ * preenchido DEPOIS, pelo modal "Descrever": pedir isso antes do envio faria
+ * quem só quer subir 10 fotos rápido preencher 10 campos de texto um a um.
  */
 const KB = 1024;
 
@@ -45,11 +52,8 @@ function formatarBytes(bytes) {
     return `${(n / (KB * KB)).toFixed(1)} MB`;
 }
 
-const TIPOS = FORMATOS_ACEITOS.split(",");
-
 export default function Midias() {
     const toast = useToast();
-    const inputRef = useRef(null);
 
     const lista = useListaAdmin({ q: "" });
     const { itens, total, totalPaginas, isLoading, isError, refetch } = useMidiasAdmin({
@@ -59,28 +63,28 @@ export default function Midias() {
 
     const { enviar, atualizarAltText, remover } = useMutacoesMidia();
 
-    const [arquivo, setArquivo] = useState(null);
-    const [previa, setPrevia] = useState(null);
-    const [altTextNovo, setAltTextNovo] = useState("");
-    const [erroArquivo, setErroArquivo] = useState(null);
-
     const [edicao, setEdicao] = useState(null);
-    const [altTextEdicao, setAltTextEdicao] = useState("");
+    const [altTextEdicao, setAltTextEdicao] = useState(edicao?.altText ?? "");
     const [confirmar, setConfirmar] = useState(null);
+    const [gerandoAlt, setGerandoAlt] = useState(false);
 
-    useEffect(() => {
-        if (!arquivo) {
-            setPrevia(null);
-            return undefined;
+    const abrirEdicao = (midia) => {
+        setEdicao(midia);
+        setAltTextEdicao(midia.altText ?? "");
+    };
+
+    const gerarAltTextComIa = async () => {
+        if (!edicao) return;
+        setGerandoAlt(true);
+        try {
+            const sugestao = await midiasAdminService.gerarTextoAlternativo(edicao.id);
+            setAltTextEdicao(sugestao);
+        } catch {
+            /* toast de erro ja emitido pelo interceptor */
+        } finally {
+            setGerandoAlt(false);
         }
-        const url = URL.createObjectURL(arquivo);
-        setPrevia(url);
-        return () => URL.revokeObjectURL(url);
-    }, [arquivo]);
-
-    useEffect(() => {
-        if (edicao) setAltTextEdicao(edicao.altText ?? "");
-    }, [edicao]);
+    };
 
     const filtradas = useMemo(() => {
         const termo = lista.filtros.q.trim().toLowerCase();
@@ -115,45 +119,20 @@ export default function Midias() {
         ];
     }, [itens, total]);
 
-    const escolher = (evento) => {
-        const escolhido = evento.target.files?.[0] ?? null;
-        setErroArquivo(null);
+    /** Sobe cada arquivo do lote — em paralelo, sem se importar com ordem (não há capa aqui). */
+    const enviarLote = async (arquivos) => {
+        const resultados = await Promise.allSettled(
+            arquivos.map((arquivo) => enviar.mutateAsync({ arquivo, altText: "" })),
+        );
 
-        if (!escolhido) {
-            setArquivo(null);
-            return;
-        }
-        if (!TIPOS.includes(escolhido.type)) {
-            setErroArquivo("Formato não aceito. Envie a imagem em JPEG, PNG, WebP ou AVIF.");
-            setArquivo(null);
-            return;
-        }
-        if (escolhido.size > TAMANHO_MAXIMO_BYTES) {
-            setErroArquivo(
-                `A imagem tem ${formatarBytes(escolhido.size)} e o limite é ${formatarBytes(TAMANHO_MAXIMO_BYTES)}.`,
+        const sucesso = resultados.filter((r) => r.status === "fulfilled").length;
+
+        if (sucesso > 0) {
+            toast.success(
+                sucesso === 1 ? "Imagem adicionada ao acervo." : `${sucesso} imagens adicionadas ao acervo.`,
             );
-            setArquivo(null);
-            return;
         }
-        setArquivo(escolhido);
-    };
-
-    const limparEnvio = () => {
-        setArquivo(null);
-        setAltTextNovo("");
-        setErroArquivo(null);
-        if (inputRef.current) inputRef.current.value = "";
-    };
-
-    const enviarArquivo = async () => {
-        if (!arquivo) return;
-        try {
-            await enviar.mutateAsync({ arquivo, altText: altTextNovo.trim() });
-            toast.success("Imagem adicionada ao acervo.");
-            limparEnvio();
-        } catch {
-            /* o interceptor do axios já mostrou o erro */
-        }
+        // Falhas individuais já viraram toast de erro pelo interceptor do axios.
     };
 
     const salvarAltText = async (evento) => {
@@ -228,7 +207,7 @@ export default function Midias() {
             alinhamento: "direita",
             render: (m) => (
                 <div className="flex justify-end gap-2">
-                    <Botao tamanho="sm" variante="sutil" onClick={() => setEdicao(m)}>
+                    <Botao tamanho="sm" variante="sutil" onClick={() => abrirEdicao(m)}>
                         <FiEdit2 size={13} aria-hidden="true" />
                         Descrever
                     </Botao>
@@ -252,82 +231,19 @@ export default function Midias() {
             {/* --------------------------------------------------- Envio */}
             <section className="mb-10 border border-sand bg-linen/50 p-4 sm:p-6">
                 <h2 className="mb-1 font-display text-xl tracking-tight text-ink">
-                    Enviar imagem
+                    Enviar imagens
                 </h2>
                 <p className="mb-5 text-sm leading-relaxed text-ink-soft">
-                    JPEG, PNG, WebP ou AVIF, até {formatarBytes(TAMANHO_MAXIMO_BYTES)}.
+                    Arraste quantas quiser, ou clique para escolher. JPEG, PNG, WebP ou AVIF, até{" "}
+                    {formatarBytes(TAMANHO_MAXIMO_BYTES)} cada — o envio começa na hora. Descreva
+                    cada uma depois, pela ação "Descrever" na lista.
                 </p>
 
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-[10rem,1fr]">
-                    <div className="aspect-product w-full max-w-[10rem] border border-sand bg-base-100">
-                        {previa ? (
-                            <img
-                                src={previa}
-                                alt="Pré-visualização da imagem escolhida"
-                                className="h-full w-full object-cover"
-                            />
-                        ) : (
-                            <div className="flex h-full w-full items-center justify-center text-taupe">
-                                <FiImage size={26} aria-hidden="true" />
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="flex flex-col gap-4">
-                        <div className="flex flex-col gap-1.5">
-                            <label htmlFor="arquivo-acervo" className="eyebrow">
-                                Arquivo
-                            </label>
-                            <input
-                                id="arquivo-acervo"
-                                ref={inputRef}
-                                type="file"
-                                accept={FORMATOS_ACEITOS}
-                                onChange={escolher}
-                                className="w-full border border-sand bg-base-100 px-3 py-2.5 font-sans text-sm text-ink file:mr-4 file:border-0 file:bg-linen file:px-3 file:py-1.5 file:font-sans file:text-xs file:uppercase file:tracking-widest file:text-ink"
-                            />
-                            {erroArquivo && (
-                                <p role="alert" className="text-xs text-danger">
-                                    {erroArquivo}
-                                </p>
-                            )}
-                            {arquivo && !erroArquivo && (
-                                <p className="text-xs text-ink-soft">
-                                    {arquivo.name} · {formatarBytes(arquivo.size)}
-                                </p>
-                            )}
-                        </div>
-
-                        <Campo
-                            label="Texto alternativo"
-                            value={altTextNovo}
-                            maxLength={LIMITES.altText}
-                            placeholder="Vestido midi em linho, cor terracota, de frente"
-                            ajuda="Descreve a foto para quem usa leitor de tela e para o buscador."
-                            onChange={(e) => setAltTextNovo(e.target.value)}
-                        />
-
-                        <div className="flex flex-wrap gap-2">
-                            <Botao
-                                onClick={enviarArquivo}
-                                disabled={!arquivo || enviar.isPending}
-                                carregando={enviar.isPending}
-                            >
-                                <FiUpload size={14} aria-hidden="true" />
-                                Enviar
-                            </Botao>
-                            {arquivo && (
-                                <Botao
-                                    variante="texto"
-                                    onClick={limparEnvio}
-                                    disabled={enviar.isPending}
-                                >
-                                    Descartar
-                                </Botao>
-                            )}
-                        </div>
-                    </div>
-                </div>
+                <Dropzone
+                    aceita={FORMATOS_ACEITOS}
+                    tamanhoMaximoBytes={TAMANHO_MAXIMO_BYTES}
+                    onArquivos={enviarLote}
+                />
             </section>
 
             {isError ? (
@@ -403,7 +319,7 @@ export default function Midias() {
                                                 <Botao
                                                     tamanho="sm"
                                                     variante="sutil"
-                                                    onClick={() => setEdicao(m)}
+                                                    onClick={() => abrirEdicao(m)}
                                                 >
                                                     Descrever
                                                 </Botao>
@@ -473,15 +389,37 @@ export default function Midias() {
                         </div>
                     )}
 
-                    <Campo
-                        label="Texto alternativo"
-                        como="textarea"
-                        rows={3}
-                        value={altTextEdicao}
-                        maxLength={LIMITES.altText}
-                        ajuda="Só a descrição é editável. Para trocar a foto, envie outra imagem: mudar o arquivo alteraria a peça de todo mundo que usa esta."
-                        onChange={(e) => setAltTextEdicao(e.target.value)}
-                    />
+                    <div>
+                        <div className="mb-1.5 flex items-center justify-between gap-3">
+                            <span className="font-sans text-sm font-medium text-ink">
+                                Texto alternativo
+                            </span>
+                            <button
+                                type="button"
+                                onClick={gerarAltTextComIa}
+                                disabled={gerandoAlt || !edicao}
+                                className="flex shrink-0 items-center gap-1.5 font-sans text-xs font-medium text-taupe transition-colors hover:text-olive disabled:opacity-40"
+                            >
+                                {gerandoAlt ? (
+                                    <span
+                                        className="loading loading-spinner loading-xs"
+                                        aria-hidden="true"
+                                    />
+                                ) : (
+                                    <FiZap size={12} aria-hidden="true" />
+                                )}
+                                Gerar com IA
+                            </button>
+                        </div>
+                        <Campo
+                            como="textarea"
+                            rows={3}
+                            value={altTextEdicao}
+                            maxLength={LIMITES.altText}
+                            ajuda="Só a descrição é editável. Para trocar a foto, envie outra imagem: mudar o arquivo alteraria a peça de todo mundo que usa esta."
+                            onChange={(e) => setAltTextEdicao(e.target.value)}
+                        />
+                    </div>
                 </form>
             </Modal>
 

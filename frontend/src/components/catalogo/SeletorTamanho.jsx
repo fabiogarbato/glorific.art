@@ -51,7 +51,7 @@ export default function SeletorTamanho({
                             type="button"
                             disabled={bloqueado}
                             aria-pressed={selecionado}
-                            aria-label={motivo ? `${opcao.codigo} — ${motivo}` : opcao.codigo}
+                            aria-label={motivo ? `${opcao.codigo}, ${motivo}` : opcao.codigo}
                             title={motivo ?? undefined}
                             onClick={() => onSelecionar?.(opcao)}
                             className={[

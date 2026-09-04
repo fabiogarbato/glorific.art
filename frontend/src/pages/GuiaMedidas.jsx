@@ -59,7 +59,7 @@ const CUIDADOS = [
     "Use a fita métrica de costura, nunca a trena de obra: ela precisa acompanhar a curva do corpo.",
     "Meça sobre roupa leve ou sobre a pele. Casaco e jeans grosso somam centímetros que não existem.",
     "A fita encosta, mas não aperta. Puxar a fita é o jeito mais rápido de comprar um tamanho menor do que o seu.",
-    "Se puder, peça a alguém para medir por você — sozinha, a fita tende a subir nas costas.",
+    "Se puder, peça a alguém para medir por você. Sozinha, a fita tende a subir nas costas.",
     "Entre dois tamanhos, escolha o maior quando quiser caimento mais solto e o menor quando quiser marcado.",
 ];
 
@@ -274,7 +274,7 @@ export default function GuiaMedidas() {
                         </h2>
                         <p className="mt-5 text-base leading-relaxed text-ink-soft">
                             As medidas das tabelas são do CORPO, salvo onde estiver escrito o
-                            contrário — comprimento e manga descrevem a peça pronta.
+                            contrário: comprimento e manga descrevem a peça pronta.
                         </p>
                     </div>
 

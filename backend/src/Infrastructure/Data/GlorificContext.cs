@@ -92,6 +92,7 @@ public class GlorificContext : DbContext, IUnitOfWork
     // ---------- Config ----------
     public DbSet<AppSecret> AppSecrets => Set<AppSecret>();
     public DbSet<ConfiguracaoLoja> ConfiguracoesLoja => Set<ConfiguracaoLoja>();
+    public DbSet<Glorific.Domain.Entities.Integracoes.ContaMelhorEnvio> ContasMelhorEnvio => Set<Glorific.Domain.Entities.Integracoes.ContaMelhorEnvio>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

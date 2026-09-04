@@ -24,8 +24,12 @@ internal static class MelhorEnvioJson
     /// WhenWritingNull nao e cosmetico — o contrato exige que campos como nonCommercial e
     /// invoice sumam do payload quando nao se aplicam, e nao que viajem como null.
     /// </summary>
+    // snake_case: contrato REAL do Melhor Envio (nao mais do microservico intermediario, que
+    // aceitava camelCase e convertia por dentro antes de repassar). PostalCode vira
+    // postal_code, InsuranceValue vira insurance_value, etc — pra TODO payload de saida.
     public static readonly JsonSerializerOptions Envio = new(JsonSerializerDefaults.Web)
     {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 

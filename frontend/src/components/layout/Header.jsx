@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { FiMenu, FiSearch, FiShoppingBag, FiX } from "react-icons/fi";
 import MenuConta from "./MenuConta.jsx";
@@ -9,6 +9,37 @@ const linkClasses = ({ isActive }) =>
     `font-sans text-xs uppercase tracking-widest transition-colors ${
         isActive ? "text-ink" : "text-ink-soft hover:text-ink"
     }`;
+
+const MENSAGENS_FAIXA = [
+    "Frete cortesia acima de R$ 399 · Parcelamento em até 6x",
+    "Anunciando Cristo, até na passagem.",
+    "Pregando sem abrir a boca.",
+    "Testemunho que não sai na lavagem.",
+    "A rua também é altar.",
+    "Glorificando em qualquer esquina.",
+];
+
+function FaixaTopo() {
+    const [indice, setIndice] = useState(0);
+
+    useEffect(() => {
+        const id = setInterval(() => {
+            setIndice((i) => (i + 1) % MENSAGENS_FAIXA.length);
+        }, 4200);
+        return () => clearInterval(id);
+    }, []);
+
+    return (
+        <div className="flex h-9 items-center justify-center overflow-hidden bg-ink px-4 text-center">
+            <p
+                key={indice}
+                className="animate-fade-up line-clamp-2 font-sans text-[11px] uppercase leading-tight tracking-widest text-bone"
+            >
+                {MENSAGENS_FAIXA[indice]}
+            </p>
+        </div>
+    );
+}
 
 export default function Header() {
     const [menuAberto, setMenuAberto] = useState(false);
@@ -29,14 +60,11 @@ export default function Header() {
 
     return (
         <header className="sticky top-0 z-header border-b border-sand bg-base-100/95 backdrop-blur">
-            {/* Faixa de aviso — o unico bloco escuro do topo. */}
-            <div className="bg-ink px-4 py-2 text-center">
-                <p className="font-sans text-[11px] uppercase tracking-widest text-bone">
-                    Frete cortesia acima de R$ 399 · Parcelamento em até 6x
-                </p>
-            </div>
+            {/* Faixa de aviso — o unico bloco escuro do topo, alterna entre
+                info pratica e a voz da marca. */}
+            <FaixaTopo />
 
-            <div className="shell flex h-20 items-center justify-between gap-6">
+            <div className="shell flex h-24 items-center justify-between gap-6">
                 <button
                     type="button"
                     aria-label={menuAberto ? "Fechar menu" : "Abrir menu"}
@@ -47,13 +75,12 @@ export default function Header() {
                     {menuAberto ? <FiX size={20} /> : <FiMenu size={20} />}
                 </button>
 
-                <Link to="/" className="shrink-0" aria-label={`${STORE.name} — início`}>
-                    <span className="font-display text-xl tracking-tight text-ink sm:text-2xl">
-                        glorific
-                    </span>
-                    <span className="font-display text-xl tracking-tight text-brass sm:text-2xl">
-                        .art
-                    </span>
+                <Link to="/" className="shrink-0" aria-label={`${STORE.name}, início`}>
+                    <img
+                        src="/logo-glorific.png"
+                        alt={STORE.name}
+                        className="h-16 w-auto sm:h-20"
+                    />
                 </Link>
 
                 <nav aria-label="Principal" className="hidden items-center gap-8 lg:flex">
