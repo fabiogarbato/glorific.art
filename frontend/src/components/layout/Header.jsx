@@ -93,7 +93,7 @@ export default function Header() {
         <header
             className={`sticky top-0 z-header border-b transition-colors duration-300 ${
                 transparente
-                    ? "border-transparent bg-ink/60 backdrop-blur-md"
+                    ? "border-transparent bg-ink"
                     : "border-sand bg-base-100/95 backdrop-blur"
             }`}
         >
@@ -120,7 +120,9 @@ export default function Header() {
                         src={transparente ? "/hero-logo-mark.png" : "/logo-glorific.png"}
                         alt={STORE.name}
                         className={`w-auto transition-all duration-300 ${
-                            transparente ? "h-28 sm:h-36" : "h-16 sm:h-20"
+                            transparente
+                                ? "h-28 translate-y-6 sm:h-36 sm:translate-y-8"
+                                : "h-16 sm:h-20"
                         }`}
                     />
                 </Link>
