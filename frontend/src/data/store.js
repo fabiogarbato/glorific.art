@@ -12,7 +12,7 @@ export const STORE = Object.freeze({
     },
 
     social: {
-        instagram: "https://instagram.com/glorific.art",
+        instagram: "https://instagram.com/art.glorific",
         whatsapp: "5541900000000",
         whatsapp_text: "Olá! Vim pelo site da glorific.art e gostaria de ajuda.",
     },
