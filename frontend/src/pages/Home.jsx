@@ -64,13 +64,13 @@ export default function Home() {
 
                 <div className="shell relative py-10 lg:py-28">
                     <div className="max-w-lg">
-                        {!carregandoColecoes && colecaoDestaque && (
-                            <p className="font-sans text-xs uppercase tracking-widest text-brass">
-                                Em cartaz · {colecaoDestaque.nome}
-                            </p>
-                        )}
+                        <p className="font-sans text-xs uppercase tracking-widest text-brass">
+                            {!carregandoColecoes && colecaoDestaque
+                                ? `Em cartaz · ${colecaoDestaque.nome}`
+                                : "Peças de rua com propósito"}
+                        </p>
 
-                        <h1 className="font-display text-4xl leading-[1.05] tracking-tight text-bone sm:text-5xl lg:text-6xl">
+                        <h1 className="mt-4 font-display text-4xl leading-[1.05] tracking-tight text-bone sm:text-5xl lg:text-6xl">
                             A beleza que
                             <br />
                             <em className="font-normal italic text-olive">não precisa</em>
